@@ -188,7 +188,7 @@ ncdata.catalog_save ("skysim5000_data.fits", True)
 
 # If the catalog already exists, skip previous step and load it directly
 
-ncdata.catalog_load("skysim5000_data.fits")
+#ncdata.catalog_load("skysim5000_data.fits")
 
 
 # ## Define free parameters and prepare likelihood
