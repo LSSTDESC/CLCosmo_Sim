@@ -123,24 +123,25 @@ lnM_min = math.log (mmin)
 lnM_max = math.log (mmax)
 
 # using Log normal distribution
-#cluster_m = Nc.ClusterMass.new_from_name ("NcClusterMassLnnormal{'lnMobs-min':<%20.15e>, 'lnMobs-max':<%20.15e>}" % (lnMobs_min, lnMobs_max))
-#cluster_m.props.bias       = 0.0
-#cluster_m.props.sigma      = 0.2
+cluster_m = Nc.ClusterMass.new_from_name ("NcClusterMassLnnormal{'lnMobs-min':<%20.15e>, 'lnMobs-max':<%20.15e>}" % (lnM_min, lnM_max))
+cluster_m.props.bias       = 0.0
+cluster_m.props.sigma      = 0.2
+print(cluster_m.lnMobs_min, cluster_m.lnMobs_max, lnM_min, lnM_max)
 
 # no distribution - assumes masses are perfectly known
-cluster_m = Nc.ClusterMassNodist()
-print(cluster_m.lnM_min, cluster_m.lnM_max, lnM_min, lnM_max)
+#cluster_m = Nc.ClusterMassNodist()
+#print(cluster_m.lnM_min, cluster_m.lnM_max, lnM_min, lnM_max)
 
 #
 # New Cluster Redshift object
 #
 
 # using a global gaussian distribution
-#cluster_z = Nc.ClusterRedshift.new_from_name ("NcClusterPhotozGaussGlobal{'pz-min':<%20.15e>, 'pz-max':<%20.15e>, 'z-bias':<0.0>, 'sigma0':<0.03>}" % (zmin, zmax))
+cluster_z = Nc.ClusterRedshift.new_from_name ("NcClusterPhotozGaussGlobal{'pz-min':<%20.15e>, 'pz-max':<%20.15e>, 'z-bias':<0.0>, 'sigma0':<0.03>}" % (zmin, zmax))
 
 # no distribution - assumes redshifts are perfectly known
-cluster_z = Nc.ClusterRedshiftNodist()
-print(cluster_z.z_min, cluster_z.z_max)
+# cluster_z = Nc.ClusterRedshiftNodist()
+# print(cluster_z.z_min, cluster_z.z_max)
 
 
 # ## Set up objects for the fit
