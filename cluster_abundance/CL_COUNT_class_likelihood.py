@@ -1,5 +1,4 @@
 import numpy as np
-import healpy
 import scipy
 from scipy.special import erfc
 from scipy.stats import poisson

@@ -15,9 +15,10 @@ class Covariance_matrix():
         self.name = 'name'
         return None
 
-    def compute_boostrap_covariance(self, catalog = 1, proxy_colname = 1, 
-                                    redshift_colname = 1, proxy_corner = 1, 
-                                    z_corner = 1, n_boot = 100, fct_modify = 1):
+    def compute_boostrap_covariance(self, catalog = None, 
+                                    proxy_colname = 'mass', redshift_colname = 'redshift', 
+                                    proxy_corner = None, z_corner = None, 
+                                    n_boot = 100):
         r"""
         Attributes:
         -----------
@@ -55,10 +56,11 @@ class Covariance_matrix():
         cov_N = np.cov(N, bias = False)
         self.Bootstrap_covariance_matrix = cov_N
 
-    def compute_jackknife_covariance_healpy(self, catalog = 1, proxy_colname = '', 
-                                           redshift_colname = '',z_corner = '', 
-                                           proxy_corner = '', ra_colname = '', 
-                                           dec_colname = '', n_power = 32, N_delete = 1):
+    def compute_jackknife_covariance_healpy(self, catalog = None, 
+                                            proxy_colname = 'mass', redshift_colname = 'redshift',
+                                            z_corner = None, proxy_corner = None, 
+                                            ra_colname = 'ra', dec_colname = 'dec', 
+                                            n_power = 8, N_delete = 1):
         r"""
         Attributes:
         -----------
@@ -103,45 +105,3 @@ class Covariance_matrix():
         cov_N = (n_jack - 1) * np.cov(N, bias = False,ddof=0)
         coeff = (n_jack-N_delete)/(N_delete*n_jack)
         self.Jackknife_covariance_matrix = cov_N * coeff
-        
-    def compute_sample_covariance(self, proxy_colname = '', redshift_colname = '',
-                                z_corner = [], proxy_corner = [], catalogs_name=[], 
-                                        fct_open = None, fct_modify = None):
-        r"""
-        Attributes:
-        -----------
-        proxy_colname: str
-            name of the proxy column
-        redshift_colname: str
-            name of the redshift column
-        proxy_corner: str
-            values of proxues to be binned
-        z_corner: str
-            values of redshifts to be binned
-        catalog_name: list
-            list of individual catalog names
-        fct_open: fct
-            opens individual catalogs
-       fct_modify: fct
-            modifies individual catalogs
-        Returns:
-        --------
-        cov_N: array
-            Sample covariance matrix
-        """
-        data_list = []
-        for cat_name in catalogs_name:
-            catalog = fct_open(cat_name)
-            if fct_modify != None: fct_modify(catalog)
-            data_individual, proxy_edges, z_edges = np.histogram2d(catalog[redshift_colname],
-                                                                   catalog[proxy_colname], 
-                                                                  bins=[z_corner, proxy_corner])
-            data_list.append(data_individual.flatten())
-        data = np.array(data_list)
-        self.data_all_catalog = data
-        N = np.stack((data.astype(float)), axis = 1)
-        mean = np.mean(N, axis = 1)
-        cov_N = np.cov(N, bias = False)
-        self.covariance_matrix = cov_N
-        self.mu = mean
-        return cov_N
