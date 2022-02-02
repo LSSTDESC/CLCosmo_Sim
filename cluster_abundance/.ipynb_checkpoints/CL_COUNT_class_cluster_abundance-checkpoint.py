@@ -1,11 +1,8 @@
 import numpy as np
 import pyccl as ccl
-import numpy as np
 import scipy
-from scipy import stats
 from scipy.integrate import quad,simps, dblquad
 from scipy import interpolate
-import sys
 
 class ClusterAbundance():
     r"""
