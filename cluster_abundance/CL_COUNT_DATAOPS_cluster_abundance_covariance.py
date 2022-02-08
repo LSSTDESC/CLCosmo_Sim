@@ -41,7 +41,7 @@ class Covariance_matrix():
         cov_N: array
             bootstrap covariance matrix
         """
-        proxy, redshift = catalog[proxy_colname], catalog[redshift_colname]
+        proxy, redshift = np.array(catalog[proxy_colname]), np.array(catalog[redshift_colname])
         index = np.arange(len(proxy))
         data_boot = []
         for i in range(n_boot):
