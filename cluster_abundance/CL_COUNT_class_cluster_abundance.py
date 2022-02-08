@@ -129,14 +129,16 @@ class ClusterAbundance():
             list of redshift bin edges
         proxybin_edges : list
             list of mass bin edges
+        N_th : ndarray
+            matrix of the cluster abindance prediction in redshift and mass bins
         method : str
             method to be used for the cluster abundance prediction
             "grid": use simpson integral of the tabulated multiplicity
             "exact": use scipy.dblquad to integer mass function
         Returns:
         --------
-        N_th_matrix: ndarray
-            matrix for the cluster abundance prediction in redshift and mass bins
+        halo_bias_matrix: ndarray
+            halo bias matrix in redshift and mass bins
         """
     
         def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
