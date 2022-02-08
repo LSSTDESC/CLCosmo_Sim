@@ -260,17 +260,19 @@ class ClusterAbundance():
         dN_dzdlogMdOmega : array
             multiplicity function for the corresponding redshifts and masses
         """
+        
         if method == 'interp':
             dN_dzdlogMdOmega_fct = interpolate.RectBivariateSpline(self.logm_grid, self.z_grid, 
                                                                    self.dN_dzdlogMdOmega)
             dN_dzdlogMdOmega = dN_dzdlogMdOmega_fct(logm, z, grid = False)    
-        if method == 'exact_CCL':
+        if method == 'exact':
             dN_dzdlogMdOmega = np.zeros(len(z))
             for i, z_ind, logm_ind in zip(np.arange(len(z)), z, logm):
                 dN_dzdlogMdOmega[i] = self.dndlog10M(logm_ind, z_ind) * self.dVdzdOmega(z_ind)
+        
         return dN_dzdlogMdOmega
 
-    def compute_cumulative_grid_ProxyZ(self, Proxy_bin = None, proxy_model = None, 
+    def compute_cumulative_grid_ProxyZ(self, proxybin_edges = None, proxy_model = None, 
                                        z_grid = None, logm_grid = None):
         r"""
         Attributes:
@@ -287,6 +289,12 @@ class ClusterAbundance():
         cumulative_proxy_grid_interp : array
             interpolation of the proxy cumulative in proxy bins
         """
+
+        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
+        
+        Proxy_bin = binning(proxybin_edges)
+
+        
         cumulative_grid = []
         cumulative_grid_interp = []
         for proxy_bin in Proxy_bin:
