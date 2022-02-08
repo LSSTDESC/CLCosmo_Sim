@@ -18,7 +18,7 @@ class ClusterAbundance():
     def ___init___(self):
         self.name = 'Cosmological prediction for cluster abundance cosmology'
         
-    def set_cosmology(self, cosmo = 1, massdef = None, hmd = None):
+    def set_cosmology(self, cosmo = None, massdef = None, hmd = None):
         r"""
         Attributes:
         ----------
@@ -68,7 +68,7 @@ class ClusterAbundance():
         dVdzdOmega_value = dh * da * da/( ez * a ** 2)
         return dVdzdOmega_value
 
-    def compute_multiplicity_grid_MZ(self, z_grid = 1, logm_grid = 1):
+    def compute_multiplicity_grid_MZ(self, z_grid = None, logm_grid = None):
         r"""
         Attributes:
         -----------
@@ -94,7 +94,7 @@ class ClusterAbundance():
                                                                 self.dN_dzdlogMdOmega, 
                                                                 kind='cubic')
         
-    def compute_halo_bias_grid_MZ(self, z_grid = 1, logm_grid = 1, halobiais = 1):
+    def compute_halo_bias_grid_MZ(self, z_grid = None, logm_grid = None, halobiais = None):
         r"""
         Attributes:
         -----------
@@ -120,26 +120,32 @@ class ClusterAbundance():
                                                                 self.halo_biais, 
                                                                 kind='cubic')
         
-    def halo_bias_MZ(self, Redshift_bin = [], Proxy_bin = [], N_th = [], method = 'simps'): 
+    def halo_bias_MZ(self, zbin_edges = None, proxybin_edges = None, N_th = [], method = 'grid'): 
         r"""
         returns the predicted number count in mass-redshift bins
         Attributes:
         -----------
-        Redshift_bin : list of lists
-            list of redshift bins
-        Proxy_bin : list of lists
-            list of mass bins
+        zbin_edges : list
+            list of redshift bin edges
+        proxybin_edges : list
+            list of mass bin edges
         method : str
             method to be used for the cluster abundance prediction
-            "simps": use simpson integral of the tabulated multiplicity
-            "exact_CCL": use scipy.dblquad to integer CCL multiplicity function
+            "grid": use simpson integral of the tabulated multiplicity
+            "exact": use scipy.dblquad to integer mass function
         Returns:
         --------
         N_th_matrix: ndarray
             matrix for the cluster abundance prediction in redshift and mass bins
         """
+    
+        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
+        
+        Redshift_bin = binning(zbin_edges)
+        Proxy_bin = binning(proxybin_edges)
+        
         halo_biais_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)]) 
-        if method == 'simps':               
+        if method == 'grid':               
             index_proxy = np.arange(len(self.logm_grid))
             index_z = np.arange(len(self.z_grid))
             for i, proxy_bin in enumerate(Proxy_bin):
@@ -157,7 +163,7 @@ class ClusterAbundance():
                     halo_biais_matrix[j,i] = simps(simps(integrand, proxy_cut), z_cut)/N_th[j,i]
             return halo_biais_matrix
         
-        if method == 'exact_CCL':
+        if method == 'exact':
             def __integrand__(logm, z):
                 a = self.sky_area * self.dVdzdOmega(z) * self.dndlog10M(logm, z)  
                 b = self.halo_bias_model.get_halo_bias(self.cosmo, 10**logm, 1./(1. + z), mdef_other = self.massdef)
@@ -172,27 +178,32 @@ class ClusterAbundance():
             
             
         
-    def Cluster_Abundance_MZ(self, Redshift_bin = [], Proxy_bin = [], method = 'dblquad_interp'): 
+    def Cluster_Abundance_MZ(self, zbin_edges = None, proxybin_edges = None, method = 'interp'): 
         r"""
         returns the predicted number count in mass-redshift bins
         Attributes:
         -----------
-        Redshift_bin : list of lists
-            list of redshift bins
-        Proxy_bin : list of lists
-            list of mass bins
+        zbin_edges : list
+            list of redshift bin edges
+        proxybin_edges : list
+            list of mass bin edges
         method : str
             method to be used for the cluster abundance prediction
-            "simps": use simpson integral of the tabulated multiplicity
-            "dblquad_interp": integer interpolated multiplicity function
-            "exact_CCL": use scipy.dblquad to integer CCL multiplicity function
+            "grid": use simpson integral of the tabulated multiplicity
+            "interp": integer interpolated mass function
+            "exact": use scipy.dblquad to integer the mass function
         Returns:
         --------
         N_th_matrix: ndarray
             matrix for the cluster abundance prediction in redshift and mass bins
         """
+        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
+        
+        Redshift_bin = binning(zbin_edges)
+        Proxy_bin = binning(proxybin_edges)
+        
         N_th_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)])
-        if method == 'dblquad_interp':
+        if method == 'interp':
             for i, proxy_bin in enumerate(Proxy_bin):
                 for j, z_bin in enumerate(Redshift_bin):
                     N_th_matrix[j,i] = self.sky_area * dblquad(self.dNdzdlogMdOmega_interpolation, 
@@ -200,7 +211,7 @@ class ClusterAbundance():
                                                    lambda x: z_bin[0], 
                                                    lambda x: z_bin[1])[0]
                     
-        if method == 'simps':
+        if method == 'grid':
             index_proxy = np.arange(len(self.logm_grid))
             index_z = np.arange(len(self.z_grid))
             for i, proxy_bin in enumerate(Proxy_bin):
@@ -218,7 +229,7 @@ class ClusterAbundance():
                     N_th = self.sky_area * simps(simps(integrand, proxy_cut), z_cut)
                     N_th_matrix[j,i] = N_th
                     
-        if method == 'exact_CCL':
+        if method == 'exact':
             def dN_dzdlogMdOmega(logm, z):
                 return self.sky_area * self.dVdzdOmega(z) * self.dndlog10M(logm, z)
             for i, proxy_bin in enumerate(Proxy_bin):
@@ -257,8 +268,8 @@ class ClusterAbundance():
                 dN_dzdlogMdOmega[i] = self.dndlog10M(logm_ind, z_ind) * self.dVdzdOmega(z_ind)
         return dN_dzdlogMdOmega
 
-    def compute_cumulative_grid_ProxyZ(self, Proxy_bin = [], proxy_model = 1, 
-                                       z_grid = 1, logm_grid = 1):
+    def compute_cumulative_grid_ProxyZ(self, Proxy_bin = None, proxy_model = None, 
+                                       z_grid = None, logm_grid = None):
         r"""
         Attributes:
         -----------
@@ -289,8 +300,8 @@ class ClusterAbundance():
         self.cumulative_proxy_grid = np.array(cumulative_grid)
         self.cumulative_proxy_grid_interp = np.array(cumulative_grid_interp)
         
-    def compute_pdf_grid_ProxyZ(self, proxy, z, proxy_model = 1,
-                               z_grid = 1, logm_grid = 1):
+    def compute_pdf_grid_ProxyZ(self, proxy, z, proxy_model = None,
+                               z_grid = None, logm_grid = None):
         r"""
         Attributes:
         -----------
@@ -312,15 +323,15 @@ class ClusterAbundance():
             pdf[i,:] = proxy_model.pdf(proxys, zs, logm_grid)
         self.pdf = pdf
 
-    def Cluster_Abundance_ProxyZ(self, Redshift_bin = [], Proxy_bin = [], logm_limit = [], 
-                                 proxy_model = None, method = 'dblquad_interp'): 
+    def Cluster_Abundance_ProxyZ(self, zbin_edges = None, proxybin_edges = None, logm_limit = None, 
+                                 proxy_model = None, method = 'interp'): 
         r"""
         Attributes:
         -----------
-        Redshift_bin: list of lists
-            list of redshift bins
-        Proxy_bin: list of lists
-            list of mass-proxy bins
+        zbin_edges : list
+            list of redshift bin edges
+        proxybin_edges : list
+            list of mass bin edges
         method: str
             method to be used for the cluster abundance prediction
         proxy_model: object
@@ -330,8 +341,15 @@ class ClusterAbundance():
         N_th_matrix: ndarray
             Cluster abundance prediction in redshift and proxy bins
         """     
+        
+        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
+        
+        Redshift_bin = binning(zbin_edges)
+        Proxy_bin = binning(proxybin_edges)
+
+        
         N_th_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)])
-        if method == 'simps':
+        if method == 'grid':
             index_z = np.arange(len(self.z_grid))
             index_logm = np.arange(len(self.logm_grid))
             mask_logm = (self.logm_grid >= logm_limit[0])*(self.logm_grid <= logm_limit[1])
@@ -352,7 +370,7 @@ class ClusterAbundance():
                                                  z_cut)
                     N_th_matrix[j,i] = N_th
                     
-        if method == 'dblquad_interp':
+        if method == 'interp':
             for i, proxy_bin in enumerate(Proxy_bin):
                 for j, z_bin in enumerate(Redshift_bin):
                     def fct_to_integer(z, logm):
@@ -364,7 +382,7 @@ class ClusterAbundance():
                                                    lambda x: z_bin[0], lambda x: z_bin[1],
                                                                epsabs=1.49e-07)[0]
                     
-        if method == 'exact_CCL':
+        if method == 'exact':
             for i, proxy_bin in enumerate(Proxy_bin):
                 for j, z_bin in enumerate(Redshift_bin):
                     def dN_dzdproxydOmega(logm, z):
@@ -379,7 +397,7 @@ class ClusterAbundance():
         return N_th_matrix
 
     def multiplicity_function_individual_ProxyZ(self, z = .1, proxy = 1, 
-                                                proxy_model = 1, method = 'simps'):
+                                                proxy_model = 1, method = 'grid'):
         r"""
         Attributes:
         -----------
@@ -391,14 +409,14 @@ class ClusterAbundance():
             object from proxy class
         method: str
             method to use to compute multiplicity function
-            "simps": use simpson integral
-            "exact_CCL": use scipy.dblquad 
+            "grid": use simpson integral
+            "exact": use scipy.dblquad 
         Returns:
         --------       
         dN_dzdlogMdOmega : array
             multiplicity function for the corresponding redshifts and mass proxies
         """
-        if method == 'simps':
+        if method == 'grid':
             z_sort = np.sort(z)
             index_sort = np.argsort(z)
             index_z = np.arange(len(z))
@@ -407,7 +425,7 @@ class ClusterAbundance():
             dndproxy = dndproxy[np.argsort(index_sort)]
             return dndproxy
         
-        if method == 'exact_CCL':
+        if method == 'exact':
             dndproxy = []
             for zs, proxys in zip(z, proxy):
                 def __integrand__(logm):
