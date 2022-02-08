@@ -55,6 +55,8 @@ class Covariance_matrix():
         mean = np.mean(data_boot, axis = 0)
         cov_N = np.cov(N, bias = False)
         self.Bootstrap_covariance_matrix = cov_N
+        
+        return cov_N
 
     def compute_jackknife_covariance_healpy(self, catalog = None, 
                                             proxy_colname = 'mass', redshift_colname = 'redshift',
@@ -85,11 +87,12 @@ class Covariance_matrix():
         cov_N: array
             Jackknife covariance matrix
         """
-        proxy, redshift = catalog[proxy_colname], catalog[redshift_colname]
-        ra, dec =  catalog[ra_colname], catalog[dec_colname]
+        proxy, redshift = np.array(catalog[proxy_colname]), np.array(catalog[redshift_colname])
+        ra, dec =  np.array(catalog[ra_colname]), np.array(catalog[dec_colname])
         index = np.arange(len(proxy))
         healpix = healpy.ang2pix(2**n_power, ra, dec, nest=True, lonlat=True)
         healpix_list_unique = np.unique(healpix)
+#        print(healpix_list_unique)
         healpix_combination_delete = list(combinations(healpix_list_unique, N_delete))
         data_jack = []
         for i, hp_list_delete in enumerate(healpix_combination_delete):
@@ -105,3 +108,5 @@ class Covariance_matrix():
         cov_N = (n_jack - 1) * np.cov(N, bias = False,ddof=0)
         coeff = (n_jack-N_delete)/(N_delete*n_jack)
         self.Jackknife_covariance_matrix = cov_N * coeff
+        
+        return cov_N
