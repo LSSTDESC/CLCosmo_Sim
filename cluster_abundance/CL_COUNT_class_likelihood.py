@@ -17,39 +17,6 @@ class Likelihood():
     def ___init___(self):
         self.name = 'Likelihood for cluster count Cosmology'
         
-    def Gaussian(self, x, mu, var_SSC):
-        r"""
-        Attributes:
-        -----------
-        x: array
-            variable along the x axis
-        mu: float
-            mean of the Gaussian distribution
-        var_SSC: float
-            variance of the Gaussian distrubution
-        Returns:
-        --------
-        g: array
-            Gausian probability density function
-        """
-        return np.exp(-.5*(x-mu)**2/var_SSC)/np.sqrt(2*np.pi*var_SSC)
-        
-    def poissonian(self, n, mu):
-        r"""
-        Attributes:
-        -----------
-        n: array
-            variable along the n axis
-        mu: float
-            mean of the Poisson distribution
-        Returns:
-        --------
-        p: array
-            Poisson probability function
-        """
-        rv = poisson(mu)
-        return rv.pmf(n)
-        
     def lnLikelihood_Binned_Poissonian(self, N_th_matrix, N_obs_matrix):
         r"""
         returns the value of the log-likelihood for Poissonian binned approach
@@ -83,6 +50,7 @@ class Likelihood():
         delta = (N_obs_matrix - N_th_matrix).flatten()
         inv_covariance_matrix = np.linalg.inv((covariance_matrix))
         self.lnL_Binned_Gaussian = -0.5*np.sum(delta*inv_covariance_matrix.dot(delta)) 
+
         
     def lnLikelihood_UnBinned_Poissonian(self, dN_dzdlogMdOmega, N_tot):
         r"""

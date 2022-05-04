@@ -92,16 +92,18 @@ class Covariance_matrix():
         index = np.arange(len(proxy))
         healpix = healpy.ang2pix(2**n_power, ra, dec, nest=True, lonlat=True)
         healpix_list_unique = np.unique(healpix)
-#        print(healpix_list_unique)
+        print(f'Number of JK regions: {len(healpix_list_unique)}')
         healpix_combination_delete = list(combinations(healpix_list_unique, N_delete))
         data_jack = []
         for i, hp_list_delete in enumerate(healpix_combination_delete):
-                mask_in_area = np.isin(healpix, hp_list_delete)
-                mask_out_area = np.invert(mask_in_area)
-                data, mass_edges, z_edges = np.histogram2d(redshift[mask_out_area], 
-                                                           proxy[mask_out_area],
-                                                           bins=[z_corner, proxy_corner])     
-                data_jack.append(data.flatten())
+            if (i/2000.).is_integer():
+                print(i)
+            mask_in_area = np.isin(healpix, hp_list_delete)
+            mask_out_area = np.invert(mask_in_area)
+            data, mass_edges, z_edges = np.histogram2d(redshift[mask_out_area], 
+                                                       proxy[mask_out_area],
+                                                       bins=[z_corner, proxy_corner])     
+            data_jack.append(data.flatten())
         data_jack = np.array(data_jack)
         N = np.stack((data_jack.astype(float)), axis = 1)
         n_jack = len(healpix_combination_delete)

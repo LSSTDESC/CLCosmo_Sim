@@ -94,7 +94,7 @@ class ClusterAbundance():
                                                                 self.dN_dzdlogMdOmega, 
                                                                 kind='cubic')
         
-    def compute_halo_bias_grid_MZ(self, z_grid = None, logm_grid = None, halobiais = None):
+    def compute_halo_bias_grid_MZ(self, z_grid = None, logm_grid = None, halobias = None):
         r"""
         Attributes:
         -----------
@@ -110,14 +110,14 @@ class ClusterAbundance():
             interpolated function over the tabulated multiplicity grid
         """
         grid = np.zeros([len(self.logm_grid), len(self.z_grid)])
-        self.halo_bias_model = halobiais
+        self.halo_bias_model = halobias
         for i, z in enumerate(self.z_grid):
             hb = self.halo_bias_model.get_halo_bias(self.cosmo, 10**self.logm_grid, 1./(1. + z), mdef_other = self.massdef)
             grid[:,i] = hb
-        self.halo_biais = grid
-        self.halo_biais_interpolation = interpolate.interp2d(self.z_grid, 
+        self.halo_bias = grid
+        self.halo_bias_interpolation = interpolate.interp2d(self.z_grid, 
                                                                 self.logm_grid, 
-                                                                self.halo_biais, 
+                                                                self.halo_bias, 
                                                                 kind='cubic')
         
     def halo_bias_MZ(self, zbin_edges = None, proxybin_edges = None, N_th = [], method = 'grid'): 
@@ -141,12 +141,15 @@ class ClusterAbundance():
             halo bias matrix in redshift and mass bins
         """
     
+        if method not in ['grid', 'exact']:
+            raise ValueError("Method '{method}' is not defined. Use 'interp' or 'grid'")
+    
         def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
         
         Redshift_bin = binning(zbin_edges)
         Proxy_bin = binning(proxybin_edges)
         
-        halo_biais_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)]) 
+        halo_bias_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)]) 
         if method == 'grid':               
             index_proxy = np.arange(len(self.logm_grid))
             index_z = np.arange(len(self.z_grid))
@@ -161,9 +164,9 @@ class ClusterAbundance():
                     z_cut = self.z_grid[mask_z]
                     index_z_cut = index_z[mask_z]
                     z_cut[0], z_cut[-1] = z_down, z_up
-                    integrand = self.sky_area * np.array([self.dN_dzdlogMdOmega[:,k][mask_proxy] * self.halo_biais[:,k][mask_proxy] for k in index_z_cut])
-                    halo_biais_matrix[j,i] = simps(simps(integrand, proxy_cut), z_cut)/N_th[j,i]
-            return halo_biais_matrix
+                    integrand = self.sky_area * np.array([self.dN_dzdlogMdOmega[:,k][mask_proxy] * self.halo_bias[:,k][mask_proxy] for k in index_z_cut])
+                    halo_bias_matrix[j,i] = simps(simps(integrand, proxy_cut), z_cut)/N_th[j,i]
+            return halo_bias_matrix
         
         if method == 'exact':
             def __integrand__(logm, z):
@@ -172,11 +175,11 @@ class ClusterAbundance():
                 return a*b
             for i, proxy_bin in enumerate(Proxy_bin):
                 for j, z_bin in enumerate(Redshift_bin):
-                    halo_biais_matrix[j,i] = scipy.integrate.dblquad(__integrand__, 
+                    halo_bias_matrix[j,i] = scipy.integrate.dblquad(__integrand__, 
                                                                z_bin[0], z_bin[1], 
                                                                lambda x: proxy_bin[0], 
                                                                lambda x: proxy_bin[1])[0]/N_th[j,i]
-            return halo_biais_matrix
+            return halo_bias_matrix
             
             
         
