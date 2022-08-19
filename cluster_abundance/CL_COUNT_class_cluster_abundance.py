@@ -4,6 +4,8 @@ import scipy
 from scipy.integrate import quad,simps, dblquad
 from scipy import interpolate
 
+def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
+
 class ClusterAbundance():
     r"""
         1. computation of the cosmological prediction for cluster abundance cosmology, for 
@@ -246,6 +248,116 @@ class ClusterAbundance():
 
         return N_th_matrix
     
+    #Proxy-z space
+    
+    def compute_cdf_grid_ProxyZ(self, proxybin_edges = None, proxy_model = None, 
+                                       z_grid = None, logm_grid = None):
+        r"""
+        Attributes:
+        -----------
+        lnLambda_bin: list of 2D arrays
+            list of proxy bins
+        proxy_model: object
+            object from class with mass-proxy relation methods
+            use of cumulative function
+        Returns:
+        --------
+        cumulative_proxy_grid : array
+            2D array of the proxy cumulative in proxy bins on a mass-redshift grid
+        cumulative_proxy_grid_interp : array
+            interpolation of the proxy cumulative in proxy bins
+        """
+        
+        Proxy_bin = binning(proxybin_edges)
+
+        
+        cumulative_grid = []
+        cumulative_grid_interp = []
+        for proxy_bin in Proxy_bin:
+            cdf = np.zeros([len(logm_grid), len(z_grid)])
+            for i, z_value in enumerate(z_grid):
+                cdf[:,i] = proxy_model.cdf(proxy_bin, z_value, logm_grid)
+            cdf_interp = interpolate.interp2d(z_grid, 
+                                            logm_grid, 
+                                            cdf, 
+                                            kind='cubic')
+            cumulative_grid.append(cdf)
+            cumulative_grid_interp.append(cdf_interp)
+        self.cdf_proxy_grid = np.array(cumulative_grid)
+        self.cdf_proxy_grid_interp = np.array(cumulative_grid_interp)
+        
+
+    def Cluster_Abundance_ProxyZ(self, zbin_edges = None, proxybin_edges = None, logm_limit = None, 
+                                 proxy_model = None, method = 'interp'): 
+        r"""
+        Attributes:
+        -----------
+        zbin_edges : list
+            list of redshift bin edges
+        proxybin_edges : list
+            list of mass bin edges
+        method: str
+            method to be used for the cluster abundance prediction
+        proxy_model: object
+            object from class with mass-proxy relation methods
+        Returns:
+        --------
+        N_th_matrix: ndarray
+            Cluster abundance prediction in redshift and proxy bins
+        """     
+        Redshift_bin = binning(zbin_edges)
+        Proxy_bin = binning(proxybin_edges)
+
+        N_th_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)])
+        if method == 'grid':
+            index_z = np.arange(len(self.z_grid))
+            index_logm = np.arange(len(self.logm_grid))
+            mask_logm = (self.logm_grid >= logm_limit[0])*(self.logm_grid <= logm_limit[1])
+            logm_cut = self.logm_grid[mask_logm]
+            index_mask_logm_cut = index_logm[mask_logm]
+            logm_cut[0], logm_cut[-1] = logm_limit[0], logm_limit[1]
+            for j, z_bin in enumerate(Redshift_bin):
+                z_down, z_up = z_bin[0], z_bin[1]
+                mask_z = (self.z_grid >= z_bin[0])*(self.z_grid <= z_bin[1])
+                z_cut = self.z_grid[mask_z]
+                index_z_cut = index_z[mask_z]
+                z_cut[0], z_cut[-1] = z_down, z_up
+                integrand_mass = np.array([self.dN_dzdlogMdOmega[:,k][mask_logm] for k in index_z_cut])
+                for i, proxy_bin in enumerate(Proxy_bin):
+                    integrand_cumulative = np.array([self.cdf_proxy_grid[i][:,k][mask_logm] for k in index_z_cut])
+                    N_th = self.sky_area * simps(simps(integrand_mass * integrand_cumulative, 
+                                                       logm_cut),
+                                                 z_cut)
+                    N_th_matrix[j,i] = N_th
+                    
+        if method == 'interp':
+            for i, proxy_bin in enumerate(Proxy_bin):
+                for j, z_bin in enumerate(Redshift_bin):
+                    def fct_to_integer(z, logm):
+                        res1 = self.cdfproxy_grid_interp[i](z, logm)
+                        res2 = self.dNdzdlogMdOmega_interpolation(z, logm)
+                        return res1 * res2
+                    N_th_matrix[j,i] = self.sky_area * dblquad(fct_to_integer, 
+                                                   logm_limit[0], logm_limit[1], 
+                                                   lambda x: z_bin[0], lambda x: z_bin[1],
+                                                               epsabs=1.49e-07)[0]
+                    
+        if method == 'exact':
+            for i, proxy_bin in enumerate(Proxy_bin):
+                for j, z_bin in enumerate(Redshift_bin):
+                    def dN_dzdproxydOmega(logm, z):
+                        res1 = self.sky_area * self.dVdzdOmega(z) * self.dndlog10M(logm, z)
+                        res2 = proxy_model.cdf(proxy_bin, z, logm)
+                        return res1 * res2
+                    N_th_matrix[j,i] = scipy.integrate.dblquad(dN_dzdproxydOmega, 
+                                                               z_bin[0], z_bin[1], 
+                                                               lambda x: logm_limit[0], 
+                                                               lambda x: logm_limit[1],
+                                                               epsabs=1.49e-07)[0]
+        return N_th_matrix
+    
+    #unbinned
+    
     def multiplicity_function_individual_MZ(self, z = .1, logm = 14, method = 'interp'):
         r"""
         Attributes:
@@ -274,140 +386,6 @@ class ClusterAbundance():
                 dN_dzdlogMdOmega[i] = self.dndlog10M(logm_ind, z_ind) * self.dVdzdOmega(z_ind)
         
         return dN_dzdlogMdOmega
-
-    def compute_cumulative_grid_ProxyZ(self, proxybin_edges = None, proxy_model = None, 
-                                       z_grid = None, logm_grid = None):
-        r"""
-        Attributes:
-        -----------
-        lnLambda_bin: list of 2D arrays
-            list of proxy bins
-        proxy_model: object
-            object from class with mass-proxy relation methods
-            use of cumulative function
-        Returns:
-        --------
-        cumulative_proxy_grid : array
-            2D array of the proxy cumulative in proxy bins on a mass-redshift grid
-        cumulative_proxy_grid_interp : array
-            interpolation of the proxy cumulative in proxy bins
-        """
-
-        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
-        
-        Proxy_bin = binning(proxybin_edges)
-
-        
-        cumulative_grid = []
-        cumulative_grid_interp = []
-        for proxy_bin in Proxy_bin:
-            cdf = np.zeros([len(logm_grid), len(z_grid)])
-            for i, z_value in enumerate(z_grid):
-                cdf[:,i] = proxy_model.cdf(proxy_bin, z_value, logm_grid)
-            cdf_interp = interpolate.interp2d(z_grid, 
-                                            logm_grid, 
-                                            cdf, 
-                                            kind='cubic')
-            cumulative_grid.append(cdf)
-            cumulative_grid_interp.append(cdf_interp)
-        self.cumulative_proxy_grid = np.array(cumulative_grid)
-        self.cumulative_proxy_grid_interp = np.array(cumulative_grid_interp)
-        
-    def compute_pdf_grid_ProxyZ(self, proxy, z, proxy_model = None,
-                               z_grid = None, logm_grid = None):
-        r"""
-        Attributes:
-        -----------
-        z: array
-            list of redshifs
-        proxy: array
-            list of dark matter halo masses
-        proxy_model: object
-            object from class with mass-proxy relation methods
-            use of pdf method
-        Returns:
-        --------       
-        pdf : array
-            Density function table as a function of mass 
-            for individual redshifts and proxy
-        """
-        pdf = np.zeros([len(z), len(logm_grid)])
-        for i, zs, proxys in zip(np.arange(len(z)), z, proxy):
-            pdf[i,:] = proxy_model.pdf(proxys, zs, logm_grid)
-        self.pdf = pdf
-
-    def Cluster_Abundance_ProxyZ(self, zbin_edges = None, proxybin_edges = None, logm_limit = None, 
-                                 proxy_model = None, method = 'interp'): 
-        r"""
-        Attributes:
-        -----------
-        zbin_edges : list
-            list of redshift bin edges
-        proxybin_edges : list
-            list of mass bin edges
-        method: str
-            method to be used for the cluster abundance prediction
-        proxy_model: object
-            object from class with mass-proxy relation methods
-        Returns:
-        --------
-        N_th_matrix: ndarray
-            Cluster abundance prediction in redshift and proxy bins
-        """     
-        
-        def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
-        
-        Redshift_bin = binning(zbin_edges)
-        Proxy_bin = binning(proxybin_edges)
-
-        
-        N_th_matrix = np.zeros([len(Redshift_bin), len(Proxy_bin)])
-        if method == 'grid':
-            index_z = np.arange(len(self.z_grid))
-            index_logm = np.arange(len(self.logm_grid))
-            mask_logm = (self.logm_grid >= logm_limit[0])*(self.logm_grid <= logm_limit[1])
-            logm_cut = self.logm_grid[mask_logm]
-            index_mask_logm_cut = index_logm[mask_logm]
-            logm_cut[0], logm_cut[-1] = logm_limit[0], logm_limit[1]
-            for j, z_bin in enumerate(Redshift_bin):
-                z_down, z_up = z_bin[0], z_bin[1]
-                mask_z = (self.z_grid >= z_bin[0])*(self.z_grid <= z_bin[1])
-                z_cut = self.z_grid[mask_z]
-                index_z_cut = index_z[mask_z]
-                z_cut[0], z_cut[-1] = z_down, z_up
-                integrand_mass = np.array([self.dN_dzdlogMdOmega[:,k][mask_logm] for k in index_z_cut])
-                for i, proxy_bin in enumerate(Proxy_bin):
-                    integrand_cumulative = np.array([self.cumulative_proxy_grid[i][:,k][mask_logm] for k in index_z_cut])
-                    N_th = self.sky_area * simps(simps(integrand_mass * integrand_cumulative, 
-                                                       logm_cut),
-                                                 z_cut)
-                    N_th_matrix[j,i] = N_th
-                    
-        if method == 'interp':
-            for i, proxy_bin in enumerate(Proxy_bin):
-                for j, z_bin in enumerate(Redshift_bin):
-                    def fct_to_integer(z, logm):
-                        res1 = self.cumulative_proxy_grid_interp[i](z, logm)
-                        res2 = self.dNdzdlogMdOmega_interpolation(z, logm)
-                        return res1 * res2
-                    N_th_matrix[j,i] = self.sky_area * dblquad(fct_to_integer, 
-                                                   logm_limit[0], logm_limit[1], 
-                                                   lambda x: z_bin[0], lambda x: z_bin[1],
-                                                               epsabs=1.49e-07)[0]
-                    
-        if method == 'exact':
-            for i, proxy_bin in enumerate(Proxy_bin):
-                for j, z_bin in enumerate(Redshift_bin):
-                    def dN_dzdproxydOmega(logm, z):
-                        res1 = self.sky_area * self.dVdzdOmega(z) * self.dndlog10M(logm, z)
-                        res2 = proxy_model.cdf(proxy_bin, z, logm)
-                        return res1 * res2
-                    N_th_matrix[j,i] = scipy.integrate.dblquad(dN_dzdproxydOmega, 
-                                                               z_bin[0], z_bin[1], 
-                                                               lambda x: logm_limit[0], 
-                                                               lambda x: logm_limit[1],
-                                                               epsabs=1.49e-07)[0]
-        return N_th_matrix
 
     def multiplicity_function_individual_ProxyZ(self, z = .1, proxy = 1, 
                                                 proxy_model = 1, method = 'grid'):
@@ -447,4 +425,26 @@ class ClusterAbundance():
                     return res1*res2
                 dndproxy.append(scipy.integrate.quad(__integrand__, self.logm_grid[0], self.logm_grid[-1])[0])
             return np.array(dndproxy)
-
+        
+    def compute_pdf_grid_ProxyZ(self, proxy, z, proxy_model = None,
+                           z_grid = None, logm_grid = None):
+        r"""
+        Attributes:
+        -----------
+        z: array
+            list of redshifs
+        proxy: array
+            list of dark matter halo masses
+        proxy_model: object
+            object from class with mass-proxy relation methods
+            use of pdf method
+        Returns:
+        --------       
+        pdf : array
+            Density function table as a function of mass 
+            for individual redshifts and proxy
+        """
+        pdf = np.zeros([len(z), len(logm_grid)])
+        for i, zs, proxys in zip(np.arange(len(z)), z, proxy):
+            pdf[i,:] = proxy_model.pdf(proxys, zs, logm_grid)
+        self.pdf = pdf
