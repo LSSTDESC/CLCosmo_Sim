@@ -246,7 +246,7 @@ def Cluster_Abundance_ProxyZ(z_bins, richness_bins,
     dNdOmega = np.zeros([len(richness_bins), len(z_bins)])
     if add_purity:
         if add_completeness:
-            integrand = dNdzdlogMdOmega * richness_mass_relation * completeness/purity
+            integrand = dNdzdlogMdOmega * richness_mass_relation * completeness / purity
         else:
             integrand = dNdzdlogMdOmega * richness_mass_relation / purity
     else:
@@ -270,7 +270,7 @@ def Cluster_Abundance_ProxyZ(z_bins, richness_bins,
             dNdOmega[i,j] = integral
     return dNdOmega, integrand
 
-def abundance(z_bins, richness_bins, cosmo, hmd, theta_purity, theta_completeness, theta_rm,
+def abundance_proxy(z_bins, richness_bins, cosmo, hmd, theta_purity, theta_completeness, theta_rm,
              richness_grid, logm_grid, z_grid,
              dNdzdlogMdOmega=None, purity=None, completeness=None, richness_mass_relation=None, 
              add_purity=True, add_completeness=True,
@@ -349,4 +349,81 @@ def abundance(z_bins, richness_bins, cosmo, hmd, theta_purity, theta_completenes
                              richness_grid, logm_grid, z_grid, add_purity, add_completeness)
     
     return dNdOmega, integrand
+
+def Cluster_Abundance_MZ(z_bins, logm_bins, dNdzdlogMdOmega, completeness,
+                             logm_grid, z_grid, add_completeness): 
+    r"""
+    Attributes:
+    -----------
+    z_bins : array
+        list of redshift bins
+    richness_bins : array
+        list of richness bins
+    dNdzdlogMdOmega : array
+        dNdzdlogMdOmega grid
+    purity : array
+        purity grid
+    completeness : array
+        completeness grid
+    richness_mass_relation : array
+        richness_mass_relation grid
+    richness_grid : array
+        richness grid
+    logm_grid : array
+        logm grid
+    z_grid : array
+        redshift grid
+    add_purity : Bool
+        add purity ?
+    add_completeness : Bool
+        add completeness ?
+    Returns:
+    --------
+    dNdOmega : ndarray
+        Cluster abundance prediction in redshift and proxy bins
+    """  
+    dNdOmega = np.zeros([len(logm_bins), len(z_bins)])
+
+    if add_completeness:
+        integrand = dNdzdlogMdOmega *  completeness
+    else:
+        integrand = dNdzdlogMdOmega
+            
+    for i, logm_bin in enumerate(logm_bins):
+        #resize richness-axis
+        index_logm_grid_cut, logm_grid_cut = reshape_axis(logm_grid, logm_bin)
+        for j, z_bin in enumerate(z_bins):
+            #resize redshift-axis
+            index_z_grid_cut, z_grid_cut = reshape_axis(z_grid, z_bin)
+            integrand_cut = integrand[index_logm_grid_cut,:]
+            integrand_cut = integrand_cut[:,index_z_grid_cut]
+            integral = simps(simps(integrand_cut, logm_grid_cut, axis=0),  z_grid_cut, axis=0)
+            dNdOmega[i,j] = integral
+    return dNdOmega, integrand
+
+def abundance_mass(z_bins, logm_bins, 
+                   cosmo, hmd, 
+                   theta_completeness,
+                   logm_grid, z_grid,
+                   dNdzdlogMdOmega=None, completeness=None, 
+                   add_completeness=True,
+                   compute_dNdzdlogMdOmega=True, 
+                   compute_completeness=True):
+
+    shape_integrand = [len(logm_grid), len(z_grid)]
+    if compute_completeness:
+        completeness_ = compute_completeness_grid(logm_grid, z_grid, theta_completeness)
+        completeness = completeness_
+
+    if compute_dNdzdlogMdOmega:
+        dNdzdlogMdOmega_ = compute_dNdzdlogMdOmega_grid(logm_grid, z_grid, cosmo, hmd)
+        dNdzdlogMdOmega = dNdzdlogMdOmega_
+        
+    dNdOmega, integrand = Cluster_Abundance_MZ(z_bins, logm_bins,
+                             dNdzdlogMdOmega, completeness,
+                          logm_grid, z_grid, add_completeness)
+    
+    return dNdOmega, integrand
+    
+    
     
