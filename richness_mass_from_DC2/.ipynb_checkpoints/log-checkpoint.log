@@ -1,0 +1,15 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Wed Jan 11 21:41:11 CET 2023
+* Job name:             cm
+* Job id:               20891895
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          cca007
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0301
+****************************************************************
+startof 0
