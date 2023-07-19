@@ -38,6 +38,8 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm):
         conc = ccl.halos.concentration.ConcentrationDiemer15(mdef=deff)
     if cM == 'Duffy08':
         conc = ccl.halos.concentration.ConcentrationDuffy08(mdef=deff)
+    if cM == 'Prada12':
+        conc = ccl.halos.concentration.ConcentrationPrada12(mdef=deff)
     
     for i, z in enumerate(z_grid):
         lnc = np.log(conc._concentration(cosmo_ccl, 10**logm_grid, 1./(1. + z))) 

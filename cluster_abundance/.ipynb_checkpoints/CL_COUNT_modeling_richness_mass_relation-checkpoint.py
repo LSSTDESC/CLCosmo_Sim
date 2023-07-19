@@ -33,7 +33,7 @@ def pdf_richness_mass_relation(richness, logm, z, theta_rm):
     log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m = theta_rm
     proxy_mu = proxy_mu_f(logm, z, theta_rm)
     proxy_sigma = proxy_sigma_f(logm, z, theta_rm)
-    return (1/richness)*np.exp(-.5*(np.log(richness)-proxy_mu)**2/proxy_sigma**2)/np.sqrt(2*np.pi*proxy_sigma**2)
+    return (1/richness)*np.exp(-(np.log(richness)-proxy_mu)**2/(2*proxy_sigma**2))/np.sqrt(2*np.pi*proxy_sigma**2)
 
 # class Richness():
 #     r"""

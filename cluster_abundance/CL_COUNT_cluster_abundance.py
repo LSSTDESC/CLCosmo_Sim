@@ -113,9 +113,9 @@ def compute_richness_mass_relation_grid(richness_grid, logm_grid, z_grid, theta_
     for i, z in enumerate(z_grid): z_tab[:,:,i] = z
     mu = rm_relation.proxy_mu_f(logm_tab, z_tab, theta_rm)
     sigma = rm_relation.proxy_sigma_f(logm_tab, z_tab, theta_rm)
-    pdf = (1/richness_tab)*np.exp(-.5*(np.log(richness_tab)-mu)**2/(sigma**2))/(np.sqrt(2*np.pi*sigma**2))
+    pdf = (1/richness_tab)*np.exp(-(np.log(richness_tab)-mu)**2/(2*sigma**2))/(np.sqrt(2*np.pi*sigma**2))
     #pdf = rm_relation.pdf_richness_mass_relation(richness_tab, logm_tab, z_tab, theta_rm)
-    return pdf
+    return pdf, mu, sigma
 
 def recompute_count_modelling(count_modelling, compute = None, grids = None, params = None):
     r"""
@@ -154,10 +154,13 @@ def recompute_count_modelling(count_modelling, compute = None, grids = None, par
         count_modelling['completeness'] = completeness_new
      
     if compute['compute_richness_mass_relation']:
-        count_modelling['richness_mass_relation'] = compute_richness_mass_relation_grid(grids['richness_grid'], 
+        pdf_map, mu_map, sigma_map = compute_richness_mass_relation_grid(grids['richness_grid'], 
                                                                          grids['logm_grid'], 
                                                                          grids['z_grid'], 
                                                                          params['params_richness_mass_relation'])
+        count_modelling['richness_mass_relation'] = pdf_map
+        count_modelling['richness_mass_relation - mean'] = mu_map
+        count_modelling['richness_mass_relation - sigma'] = sigma_map
 
     if compute['compute_dNdzdlogMdOmega']:
         dNdzdlogMdOmega_ = compute_dNdzdlogMdOmega_grid(grids['logm_grid'], grids['z_grid'], 
