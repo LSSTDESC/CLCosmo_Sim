@@ -16,6 +16,7 @@ def load(filename, **kwargs):
     with open(filename, 'rb') as fin:
         return pickle.load(fin, **kwargs)
 
+import redshift_richness_bins as analysis
 sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_abundance')
 import CL_COUNT_modeling_completeness as comp
 import CL_COUNT_modeling_purity as pur
@@ -27,12 +28,10 @@ import CL_COUNT_class_likelihood as likelihood
 import CL_LENSING_cluster_lensing as cl_lensing
 CLCount_likelihood = likelihood.Likelihood()
 
-sys.path.append('/pbs/throng/lsst/users/cpayerne/CLMassDC2/modules/')
-import analysis_Mass_Richness_relation as analysis
 
-code, analysisname, index_analysis = sys.argv
-analysis_metadata = analysis_list.analysis[str(analysisname)][int(index_analysis)]
-fit_cosmo = analysis_list.analysis[str(analysisname)][int(index_analysis)]['fit_cosmo']
+code, index_analysis = sys.argv
+analysis_metadata = analysis_list.analysis[int(index_analysis)]
+fit_cosmo = analysis_metadata['fit_cosmo']
 
 #cosmology
 Omega_m_true = 0.2648
@@ -45,8 +44,13 @@ True_value = [Omega_m_true, sigma8_true]
 cosmo_clmm = Cosmology(H0 = H0_true, Omega_dm0 = Omega_c_true, Omega_b0 = Omega_b_true, Omega_k0 = 0.0)
 cosmo = ccl.Cosmology(Omega_c = Omega_c_true, Omega_b = Omega_b_true, h = H0_true/100, sigma8 = sigma8_true, n_s=ns_true)
 #halo model
-massdef = ccl.halos.massdef.MassDef(200, 'critical', c_m_relation=None)
-hmd = ccl.halos.hmfunc.MassFuncBocquet16(cosmo, mass_def=massdef,hydro=False)
+massdef = ccl.halos.massdef.MassDef(200, 'critical',)# c_m_relation=None)
+if analysis_metadata['hmf'] == 'Bocquet16':
+    hmd = ccl.halos.hmfunc.MassFuncBocquet16(mass_def=massdef,hydro=False)
+elif analysis_metadata['hmf'] == 'Bocquet20':
+    hmd = ccl.halos.hmfunc.MassFuncBocquet20(mass_def=massdef)
+elif analysis_metadata['hmf'] == 'Despali16':  
+    hmd = ccl.halos.hmfunc.MassFuncDespali16(mass_def=massdef)
 
 #purity
 a_nc, b_nc, a_rc, b_rc = np.log(10)*0.8612, np.log(10)*0.3527, 2.2183, -0.6592
@@ -79,7 +83,7 @@ bins = {'redshift_bins':Z_bin, 'richness_bins': Richness_bin}
 
 #############_Data_#############
 # Lensing
-data = np.load('/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/data_for_notebooks/stacked_esd_profiles_redmapper_true.pkl', allow_pickle=True)
+data = np.load(analysis_metadata['lensing_data'], allow_pickle=True)
 profiles = data['stacked profile']
 covariances = data['stacked covariance']
 r = profiles['radius'][0]
@@ -122,8 +126,8 @@ if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
         for j, richness_bin in enumerate(Richness_bin):
             r_grid[:,j,i] = r
 
-    rup = 5.5
-    rlow = 1
+    rup = analysis_metadata['radius_max']
+    rlow = analysis_metadata['radius_min']
     mask = (r_grid > rlow)*(r_grid < rup)
 
     DS_obs_mask = DS_obs[mask]
@@ -135,7 +139,10 @@ if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
     r_reshaped = r[(r > rlow)*(r < rup)]
 
     #cluster_lensing = np.zeros([len(r), len(logm_grid), len(z_grid)])#
-    cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, 'Duffy08', logm_grid, z_grid, cosmo, cosmo_clmm)
+    cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, analysis_metadata['cM_relation'],
+                                                         logm_grid, z_grid, cosmo, cosmo_clmm,
+                                                        two_halo = analysis_metadata['two_halo'])
+    print('lensing_profile_computed')
 
 print('start')
 
@@ -231,8 +238,9 @@ pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
 sampler = emcee.EnsembleSampler(nwalker, ndim, lnL,)# pool=pool)
 sampler.run_mcmc(pos, 300, progress=True);
 flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
-name = analysis_metadata['type']
-if fit_cosmo== True: add = 'fit_cosmo'
+name = analysis_metadata['name']
+type_of_fit = analysis_metadata['type']
+if fit_cosmo== True: add = '_fit_cosmo'
 else: add = ''
-save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains/manuscript_analysis_{name}_' + add + '.pkl')
+save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains_article/{type_of_fit}_{name}' + add + '.pkl')
 #save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains/manuscript_analysis_full_cosmology_{t}.pkl')

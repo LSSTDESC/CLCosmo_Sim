@@ -1,18 +1,19 @@
 import numpy as np
 
-analysis = {}
+#analysis = {}
 
-analysis_0 = {'type': 'WLxN','fit_cosmo':True}
-analysis_1 = {'type': 'MxN','fit_cosmo':True}
-analysis_2 = {'type': 'N','fit_cosmo':True}
-analysis_3 = {'type': 'M','fit_cosmo':True}
-analysis_4 = {'type': 'WL','fit_cosmo':True}
+analysis_0 = {'name':'nfw_Duffy_1h_true_z',
+              'type': 'WLxN',
+              'fit_cosmo':False,
+              'density_profile':'nfw',
+              'cM_relation':'Duffy08',
+              'two_halo':False,
+              'hmf':'Despali16',
+              'radius_max':5.5,
+              'radius_min':1,
+         'lensing_data':'/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/data_for_notebooks/stacked_esd_profiles_redmapper_true.pkl' }
 
-analysis_10 = {'type': 'WLxN','fit_cosmo':False}
-analysis_11 = {'type': 'MxN','fit_cosmo':False}
-analysis_12 = {'type': 'N','fit_cosmo':False}
-analysis_13 = {'type': 'M','fit_cosmo':False}
-analysis_14 = {'type': 'WL','fit_cosmo':False}
 
-analysis['type'] = [analysis_0, analysis_1, analysis_2,analysis_3, analysis_4,
-                    analysis_10, analysis_11, analysis_12,analysis_13, analysis_14]
+analysis = [analysis_0]
+#, analysis_1, analysis_2,analysis_3, analysis_4,
+                   # analysis_10, analysis_11, analysis_12,analysis_13, analysis_14]

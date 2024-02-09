@@ -19,7 +19,7 @@ def dndlog10M(logm, z, cosmo, hmd):
     hmf : array
         halo mass function for the corresponding masses and redshift
     """
-    hmf = hmd.get_mass_function(cosmo, 10**np.array(logm), 1./(1. + z))
+    hmf = hmd.__call__(cosmo, 10**np.array(logm), 1./(1. + z))
     return hmf
 
 def dVdzdOmega(z, cosmo):
