@@ -43,11 +43,11 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two
         conc = ccl.halos.concentration.ConcentrationDuffy08(mass_def=deff)
     if cM == 'Prada12':
         conc = ccl.halos.concentration.ConcentrationPrada12(mass_def=deff)
-    print(1)
+    if cM == 'Bhattacharya13':
+        conc = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
     for i, z in enumerate(z_grid):
         lnc = np.log(conc._concentration(cosmo_ccl, 10**logm_grid, 1./(1. + z))) 
         concentration_grid[:,i] = np.exp(lnc)  
-    print(1)
     #excess surface density
     
     cluster_lensing_grid = np.zeros([ len(R), len(logm_grid), len(z_grid)])

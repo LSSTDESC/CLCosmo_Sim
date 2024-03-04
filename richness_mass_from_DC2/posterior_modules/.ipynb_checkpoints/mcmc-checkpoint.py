@@ -17,6 +17,7 @@ def load(filename, **kwargs):
         return pickle.load(fin, **kwargs)
 
 import redshift_richness_bins as analysis
+import read_covariance_shear_richness as GammaLambda_Cov
 sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_abundance')
 import CL_COUNT_modeling_completeness as comp
 import CL_COUNT_modeling_purity as pur
@@ -29,8 +30,10 @@ import CL_LENSING_cluster_lensing as cl_lensing
 CLCount_likelihood = likelihood.Likelihood()
 
 
+#code, analysis_type, index_analysis = sys.argv
+#analysis_metadata = analysis_list.analysis[str(analysis_type)][int(index_analysis)]
 code, index_analysis = sys.argv
-analysis_metadata = analysis_list.analysis[int(index_analysis)]
+analysis_metadata = analysis_list.analysis_list[int(index_analysis)]
 fit_cosmo = analysis_metadata['fit_cosmo']
 
 #cosmology
@@ -137,14 +140,30 @@ if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
     Err_obs = Err_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
 
     r_reshaped = r[(r > rlow)*(r < rup)]
-
+    print('-----     observed lensing profiles loaded + covariances')
     #cluster_lensing = np.zeros([len(r), len(logm_grid), len(z_grid)])#
     cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, analysis_metadata['cM_relation'],
                                                          logm_grid, z_grid, cosmo, cosmo_clmm,
                                                         two_halo = analysis_metadata['two_halo'])
-    print('lensing_profile_computed')
+    print('-----     theoretical lensing profiles computed')
+    
+    cov, cov_err = GammaLambda_Cov.read_covariance(photoz = analysis_metadata['photoz'], radius = r)
+    cov_DS_selection_bias_obs_mask = cov[mask]
+    cov_err_DS_selection_bias_obs_mask = cov_err[mask]
+    cov_DS_selection_bias_obs = cov_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
+    cov_err_DS_selection_bias_obs = cov_err_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
+    print('-----     shear-richness covariances loaded')
+    
+    Gamma1 = GammaLambda_Cov.read_gamma()
+    print('-----     log-slope of the halo mass function loaded')
+    
+    GammaCov = np.zeros(cov_DS_selection_bias_obs.shape)
+    for i in range(len(Richness_bin)):
+        for j in range(len(Z_bin)):
+            GammaCov[:,i,j] = cov_DS_selection_bias_obs[:,i,j] * Gamma1[i,j]
+    print('-----     \gamma_1 * Cov(\Delta\Sigma, \lambda|m,z)')
 
-print('start')
+    print('start')
 
     
 def lnL(theta):
@@ -205,6 +224,7 @@ def lnL(theta):
                                                                           lensing_radius = r_reshaped, grids = grids)
        
         DS_profiles = NDS_profiles/N
+        if analysis_metadata['shear_richness_cov']: DS_profiles = DS_profiles + GammaCov/proxy_mulog10m
         lnLCLWL = -.5*np.sum(((DS_profiles - DS_obs)/Err_obs)**2)
     #
     if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN':
@@ -236,11 +256,8 @@ pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
 #with Pool() as pool:
 #sampler = emcee.EnsembleSampler(nwalker, 6, lnL, )#pool=pool)
 sampler = emcee.EnsembleSampler(nwalker, ndim, lnL,)# pool=pool)
-sampler.run_mcmc(pos, 300, progress=True);
+sampler.run_mcmc(pos, 100, progress=True);
 flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
-name = analysis_metadata['name']
-type_of_fit = analysis_metadata['type']
-if fit_cosmo== True: add = '_fit_cosmo'
-else: add = ''
-save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains_article/{type_of_fit}_{name}' + add + '.pkl')
+results={'flat_chains':flat_samples, 'analysis':analysis_metadata}
+save_pickle(results, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains_article/'+analysis_metadata['name']+'.pkl')
 #save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains/manuscript_analysis_full_cosmology_{t}.pkl')
