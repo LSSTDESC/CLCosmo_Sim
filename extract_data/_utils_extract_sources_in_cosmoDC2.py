@@ -4,7 +4,6 @@ from astropy.table import QTable, Table, vstack, join
 import pickle 
 import pandas as pd
 import clmm
-import photoz_utils
 
 r"""
 extract background galaxy catalog with qserv for:

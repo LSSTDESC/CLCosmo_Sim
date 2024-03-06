@@ -1,6 +1,7 @@
 import numpy as np
 import clmm
 import sys
+import compute_lensing_profile_utils
 sys.path.append('/pbs/throng/lsst/users/cpayerne/LikelihoodsClusterAbundance/modules/')
 import edit
 import glob
@@ -27,16 +28,7 @@ for f in file:
 mask_id = np.isin(cluster_id_saved, lens_cat_to_extract['cluster_id'])
 file = np.array(file)[mask_id]
 print(len(file))
-
-bin_edges = clmm.dataops.make_bins(0.5, 10, 15, method='evenlog10width')
-
-label_pz = ['true', 'flex', 'bpz']
-label_prf = ['DSt', 'DSx', 'W_l', 'radius']
-names_cl=['id', ra_name, dec_name, z_name, obs_name]
-label_prf_full = [label_prf_ + '_' + label_pz_ for label_pz_ in label_pz for label_prf_ in label_prf]
-names = names_cl + label_prf_full
 ind_profile = {n:[] for n in names}
-
 for i, name_file in enumerate(file):
     if i%300==0: print(i)
     #cluster infos
@@ -44,33 +36,12 @@ for i, name_file in enumerate(file):
     lens = lens_cat[lens_cat['cluster_id'] == cluster_id][0]
     ra, dec, z = lens['ra'], lens['dec'], lens['redshift']
     obs = lens[obs_name]
-    
     #bckgd galaxy catalog
     table = edit.load_pickle(name_file)
     table = mask(table, z)
     #add masks ?
-    cl = clmm.galaxycluster.GalaxyCluster('halo', ra, dec, z, clmm.gcdata.GCData(Table(table)))
-    theta1, g_t, g_x = cl.compute_tangential_and_cross_components(is_deltasigma=False, cosmo=cosmo)
     cluster_data = [cluster_id, ra, dec, z, obs]
-    data_prf = []
-    for label in label_pz:
-        
-        if label=='true': sigma_c = cosmo.eval_sigma_crit(z, cl.galcat['z'])
-        elif label=='flex': sigma_c = cl.galcat['sigmac_photoz_flex']
-        elif label=='bpz': sigma_c = cl.galcat['sigmac_photoz_bpz']
-
-        cl.galcat['dst'] = sigma_c*cl.galcat['et']
-        cl.galcat['dsx'] = sigma_c*cl.galcat['ex']
-        cl.galcat['w_ls'] = sigma_c**(-2.)
-        ce = clmm.ClusterEnsemble('id', [])
-
-        p = ce.make_individual_radial_profile(cl, 'Mpc', bins=bin_edges, error_model='ste',
-                                           cosmo=cosmo, tan_component_in='dst', cross_component_in='dsx',
-                                           tan_component_out='gt', cross_component_out='gx',
-                                           tan_component_in_err=None, cross_component_in_err=None,
-                                           weights_in='w_ls', weights_out='W_l')
-        data = ce.data[0]
-        data_prf.extend([data['gt'], data['gx'], data['W_l'], data['radius']])
+    data_prf = compute_lensing_profile_utils.compute_lening_profile(cluster_id, ra, dec, z, label_pz, table, cosmo)
     data_to_save = cluster_data + data_prf
     for s, n in enumerate(names): ind_profile[n].append(data_to_save[s])
 #break
