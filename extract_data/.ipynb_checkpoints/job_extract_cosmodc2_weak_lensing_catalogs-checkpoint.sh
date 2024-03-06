@@ -19,9 +19,9 @@ START_NUM=$(($START+($SLURM_ARRAY_TASK_ID-1) * $N_PER_JOB ))
 END_NUM=$(($START+($SLURM_ARRAY_TASK_ID) * $N_PER_JOB-1 + 1))
 
 # Print the task and run range
-echo This is task $SLURM_ARRAY_TASK_ID, which will do runs forthe $START_NUM to $END_NUM
+echo This is task $SLURM_ARRAY_TASK_ID, which will do runs for the $START_NUM to $END_NUM
 
 source /pbs/home/c/cpayerne/setup_mydesc.sh
-python /pbs/throng/lsst/users/cpayerne/CLMassDC2/data/data_extraction/job/cosmodc2_weak_lensing_catalogs.py $START_NUM $END_NUM 
+python /pbs/throng/lsst/users/cpayerne/CLMassDC2/data/data_extraction/job/run_extract_sources_in_cosmoDC2.py $START_NUM $END_NUM 
 
 # python /pbs/throng/lsst/users/cpayerne/CLMassDC2/data/data_extraction/job/cosmodc2_weak_lensing_catalogs.py $DOWN $UP

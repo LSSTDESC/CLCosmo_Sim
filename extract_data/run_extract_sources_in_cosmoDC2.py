@@ -71,8 +71,7 @@ def qserv_query(lens_z, lens_distance, ra, dec, rmax = 10):
         maximum radius
     """
     zmax = 3.
-    #zmin = lens_z + .05
-    zmin = 0.
+    zmin = 0.#zmin = lens_z + .05
     theta_max = (rmax/lens_distance) * (180./np.pi)
     query = "SELECT data.coord_ra as ra, data.coord_dec as dec, data.redshift as z, "
     query += "data.galaxy_id as galaxy_id, "
