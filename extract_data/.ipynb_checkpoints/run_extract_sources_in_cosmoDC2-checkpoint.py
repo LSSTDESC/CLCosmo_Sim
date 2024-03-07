@@ -28,18 +28,10 @@ start, end = int(sys.argv[1]), int(sys.argv[2])
 
 #select galaxy clusters
 lens_catalog_name=_config_extract_sources_in_cosmoDC2.lens_catalog_name
-#'/pbs/throng/lsst/users/cpayerne/CLMassDC2/data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl'
-#lens_catalog_name='/pbs/throng/lsst/users/cpayerne/CLMassDC2/data/lens_catalog_SkySim5000.pkl'
 lens_catalog=edit.load_pickle(lens_catalog_name)
-
 where_to_save=_config_extract_sources_in_cosmoDC2.where_to_save
-#'/sps/lsst/users/cpayerne/CLMassDC2/cosmoDC2/redmapper_clusters_new/'
-#where_to_save='/sps/lsst/users/cpayerne/CLMassDC2/cosmoDC2/dm_halos/'
-
-#select subsample of clusters redMaPPer#
 mask_select = (lens_catalog['richness'] > 20)*(lens_catalog['redshift'] > .2)
 lens_catalog = lens_catalog[mask_select]
-#mask_n=np.arange(start, end)
 lens_catalog_truncated=lens_catalog
 lens_catalog_truncated = lens_catalog_truncated[np.arange(start, end)]
 #load source catalogs
@@ -203,4 +195,4 @@ for n, lens in enumerate(lens_catalog_truncated):
             data_to_save = data_to_save + dat_prf_pz
         for s, n in enumerate(names): ind_profile[n].append(data_to_save[s])
                 
-    print(ind_profile)
+edit.save_pickle(Table(ind_profile), f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/data/ind_profile_redmapper_{start}_{end}.pkl')
