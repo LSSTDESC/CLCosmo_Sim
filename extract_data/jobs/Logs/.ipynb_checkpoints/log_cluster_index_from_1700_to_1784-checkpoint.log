@@ -1,0 +1,15 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Fri Mar  8 19:38:35 CET 2024
+* Job name:             extract_cosmodc2_redmapper
+* Job id:               2221058
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0033
+****************************************************************
+ln: failed to access ‘/pbs/home/c/cpayerne/.conda/envs/myenv/share/gdb/auto-load//pbs/home/c/cpayerne/.conda/envs/myenv/lib/libarrow.so.1100.0.0-gdb.py’: Input/output error

@@ -9,14 +9,14 @@ lens_cat_to_extract = lens_cat[(lens_cat['richness'] > 20)*(lens_cat['redshift']
 n_cl = len(lens_cat_to_extract)
 index_cl = np.arange(n_cl)
 split_lists = np.array_split(index_cl, 50)
-split_lists = [[0, 5]]
+#split_lists = [[0, 5]]
 for split_list in split_lists:
     start, end = min(split_list), max(split_list)
     lines_base = [
         '#!/bin/sh',
         '# SBATCH options:',
         '#SBATCH --job-name=extract_cosmodc2_redmapper    # Job name',
-        f'#SBATCH --output=Logs/log_from_{start}_to_{end}.log',
+        f'#SBATCH --output=Logs/log_cluster_index_from_{start}_to_{end}.log',
         '#SBATCH --partition=htc               # Partition choice',
         '#SBATCH --ntasks=1                    # Run a single task (by default tasks == CPU)',
         '#SBATCH --mem=8000                    # Memory in MB per default',

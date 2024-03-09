@@ -12,8 +12,14 @@ import _config_extract_sources_in_cosmoDC2
 import _config_lensing_profiles
 from astropy.table import QTable, Table, vstack, join, hstack
 import pickle,sys
-sys.path.append('/pbs/throng/lsst/users/cpayerne/LikelihoodsClusterAbundance/modules/')
-import edit
+def load(filename, **kwargs):
+    """Loads GalaxyCluster object to filename using Pickle"""
+    with open(filename, 'rb') as fin:
+        return pickle.load(fin, **kwargs)
+def save_pickle(dat, filename, **kwargs):
+    file = open(filename,'wb')
+    pickle.dump(dat, file)
+    file.close()
 
 from clmm import Cosmology
 from scipy.integrate import simps
@@ -28,7 +34,7 @@ start, end = int(sys.argv[1]), int(sys.argv[2])
 
 #select galaxy clusters
 lens_catalog_name=_config_extract_sources_in_cosmoDC2.lens_catalog_name
-lens_catalog=edit.load_pickle(lens_catalog_name)
+lens_catalog=np.load(lens_catalog_name, allow_pickle=True)
 where_to_save=_config_extract_sources_in_cosmoDC2.where_to_save
 mask_select = (lens_catalog['richness'] > 20)*(lens_catalog['redshift'] > .2)
 lens_catalog = lens_catalog[mask_select]
@@ -173,7 +179,7 @@ for n, lens in enumerate(lens_catalog_truncated):
         print(str(timef-timei) + ' (s)')
     
     if _config_extract_sources_in_cosmoDC2.save_catalog:
-        edit.save_pickle(dat_extract, where_to_save + name_cat + '.pkl')
+        save_pickle(dat_extract, where_to_save + name_cat + '.pkl')
         
     compute_individual_lensing_profile = _config_extract_sources_in_cosmoDC2.compute_individual_lensing_profile
     
@@ -195,4 +201,5 @@ for n, lens in enumerate(lens_catalog_truncated):
             data_to_save = data_to_save + dat_prf_pz
         for s, n in enumerate(names): ind_profile[n].append(data_to_save[s])
                 
-edit.save_pickle(Table(ind_profile), f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/data/ind_profile_redmapper_{start}_{end}.pkl')
+path = '../data/ind_profile_redmapper_per_cluster_index/'
+save_pickle(Table(ind_profile), path+f'ind_profile_redmapper_{start}_{end}.pkl')

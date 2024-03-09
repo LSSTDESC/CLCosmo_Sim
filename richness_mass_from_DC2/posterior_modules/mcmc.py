@@ -15,10 +15,13 @@ def load(filename, **kwargs):
     """Loads GalaxyCluster object to filename using Pickle"""
     with open(filename, 'rb') as fin:
         return pickle.load(fin, **kwargs)
-
-import redshift_richness_bins as analysis
+    
 import read_covariance_shear_richness as GammaLambda_Cov
-sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_abundance')
+
+sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/data')
+import _redshift_richness_bins as analysis
+
+sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/modeling')
 import CL_COUNT_modeling_completeness as comp
 import CL_COUNT_modeling_purity as pur
 import CL_COUNT_modeling_halo_mass_function as hmf

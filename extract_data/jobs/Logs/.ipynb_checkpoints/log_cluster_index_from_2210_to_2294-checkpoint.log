@@ -1,0 +1,17 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Fri Mar  8 19:38:40 CET 2024
+* Job name:             extract_cosmodc2_redmapper
+* Job id:               2221064
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0064
+****************************************************************
+ln: cannot remove ‘/pbs/home/c/cpayerne/.conda/envs/myenv/share/gdb/auto-load//pbs/home/c/cpayerne/.conda/envs/myenv/lib/libarrow.so.1100.0.0-gdb.py’: No such file or directory
+/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/extract_data/_utils_extract_sources_in_cosmoDC2.py:81: UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+  tab = pd.read_sql_query(query_mysql, conn_qserv)

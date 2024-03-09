@@ -19,3 +19,4 @@ names_cl=['id', ra_name, dec_name, z_name, obs_name]
 label_prf_full = [label_prf_ + '_' + label_pz_ for label_pz_ in label_pz for label_prf_ in label_prf]
 print(label_prf_full)
 names = names_cl + label_prf_full
+suff_lensing = None
