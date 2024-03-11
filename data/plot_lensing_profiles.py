@@ -59,7 +59,6 @@ Z_bin = analysis.Z_bin
 Obs_bin = analysis.Obs_bin
 n_z_bin = len(Z_bin) 
 n_m_bin = len(Obs_bin) 
-print(n_z_bin, n_m_bin)
 scale = 4
 fig, axs = plt.subplots(n_m_bin, n_z_bin, figsize = (10,5))
 fig.subplots_adjust(wspace=0, hspace=0)
