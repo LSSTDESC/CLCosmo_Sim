@@ -6,10 +6,13 @@ import glob
 import clmm
 import time
 import _utils_photometric_redshifts
-import _utils_lensing_profiles
 import _utils_extract_sources_in_cosmoDC2
 import _config_extract_sources_in_cosmoDC2 
+
+sys.path.append('../lensing_profile_measurement')
 import _config_lensing_profiles
+import _utils_lensing_profiles
+
 from astropy.table import QTable, Table, vstack, join, hstack
 import pickle,sys
 def load(filename, **kwargs):

@@ -2,11 +2,15 @@ import numpy as np
 import clmm
 import sys
 import compute_lensing_profile_utils
-sys.path.append('/pbs/throng/lsst/users/cpayerne/LikelihoodsClusterAbundance/modules/')
-import edit
 import glob
 import time
+import pickle
 from astropy.table import QTable, Table, vstack, join, hstack
+
+def save_pickle(dat, filename, **kwargs):
+    file = open(filename,'wb')
+    pickle.dump(dat, file)
+    file.close()
 
 def mask(table, z_cl):
     masks = (table['mag_i'] < 24.5)*(table['mag_r'] < 28)*(table['z'] > z_cl + .1)
@@ -46,4 +50,4 @@ for i, name_file in enumerate(file):
     for s, n in enumerate(names): ind_profile[n].append(data_to_save[s])
 #break
 
-edit.save_pickle(Table(ind_profile), '/pbs/throng/lsst/users/cpayerne/CLMassDC2/data/data_new_version/ind_profile_redmapper.pkl')
+save_pickle(Table(ind_profile), '/pbs/throng/lsst/users/cpayerne/CLMassDC2/data/data_new_version/ind_profile_redmapper.pkl')

@@ -22,7 +22,7 @@ for split_list in split_lists:
         '#SBATCH --mem=8000                    # Memory in MB per default',
         '#SBATCH --time=0-5:00:00             # 7 days by default on htc partition',
         'source /pbs/home/c/cpayerne/setup_mydesc.sh']
-    cmd = [F'python /pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/extract_data/run_extract_sources_in_cosmoDC2.py {start} {end}'] 
+    cmd = [F'python ../run_extract_sources_in_cosmoDC2.py {start} {end}'] 
     lines = lines_base + cmd
     name_job = f'job_source_gal_extract_clusters_from_{start}_to_{end}.job'
     with open(name_job, 'w') as f:
