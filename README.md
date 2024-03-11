@@ -1,6 +1,8 @@
 # CLCosmo_Sim repository
 
-Cluster cosmology analysis using DESC tools and simulations
+Authors: C. Payerne, Z. Zhang, C. Combet, M. Aguena, T. Guillemin, M. Ricci, S. Vitenti
+
+Cluster cosmology analysis using DESC tools and simulations. This repository presents the codes that are used in the DESC project "Impact of modeling and observational systematics from cluster lensing and abundance"
 
 # Modeling
 In the /modeling directory
