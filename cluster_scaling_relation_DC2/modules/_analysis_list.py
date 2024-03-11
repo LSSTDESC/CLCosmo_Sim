@@ -28,9 +28,9 @@ def add_name(analysis):
     analysis['name'] = name
     return analysis
     
-lensing_data_truez = '/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/data_for_notebooks/stacked_esd_profiles_redmapper_true.pkl'
-lensing_data_bpz = '/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/data_for_notebooks/stacked_esd_profiles_redmapper_BPZ.pkl'
-lensing_data_flex = '/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/data_for_notebooks/stacked_esd_profiles_redmapper_flex.pkl'
+lensing_data_truez = '../../data/stacked_esd_profiles_redmapper_true.pkl'
+lensing_data_bpz = '../../data/stacked_esd_profiles_redmapper_BPZ.pkl'
+lensing_data_flex = '../../data/stacked_esd_profiles_redmapper_flex.pkl'
 #impact_c_m
 analysis_Duffy08 = {
               'type': 'WLxN',
@@ -82,10 +82,7 @@ analysis['photoz'] = [add_name(a) for a in photoz]
 analysis_GammaCov1 = analysis_Duffy08.copy()
 analysis_GammaCov1['shear_richness_cov'] = True
 analysis_GammaCov1['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$)'
-#analysis_GammaCov2 = analysis_Duffy08.copy()
-#analysis_GammaCov2['shear_richness_cov'] = True
-#analysis_GammaCov2['type'] = 'WL'
-GammaCov = [analysis_GammaCov1]#,# analysis_GammaCov2]
+GammaCov = [analysis_GammaCov1]
 analysis['GammaLambda'] = [add_name(a) for a in GammaCov]
 
 analysis_list = []

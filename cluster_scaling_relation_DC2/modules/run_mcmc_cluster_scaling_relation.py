@@ -18,10 +18,10 @@ def load(filename, **kwargs):
     
 import read_covariance_shear_richness as GammaLambda_Cov
 
-sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/data')
+sys.path.append('../../')
 import _redshift_richness_bins as analysis
 
-sys.path.append('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/modeling')
+sys.path.append('../../modeling')
 import CL_COUNT_modeling_completeness as comp
 import CL_COUNT_modeling_purity as pur
 import CL_COUNT_modeling_halo_mass_function as hmf
@@ -95,7 +95,7 @@ covariances = data['stacked covariance']
 r = profiles['radius'][0]
 
 # Count
-table_redmapper = load('/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+table_redmapper = load('../../data/catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
 N_obs, proxy_edges, z_edges = np.histogram2d(table_redmapper['redshift'], 
                                                         table_redmapper['richness'],
                                                    bins=[analysis.z_corner, analysis.rich_corner])
@@ -255,12 +255,8 @@ tf = time.time()
 print(tf-t)
 nwalker = 100
 pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
-#pos = np.array(initial) + .01*np.random.randn(nwalker, 8)
-#with Pool() as pool:
-#sampler = emcee.EnsembleSampler(nwalker, 6, lnL, )#pool=pool)
-sampler = emcee.EnsembleSampler(nwalker, ndim, lnL,)# pool=pool)
+sampler = emcee.EnsembleSampler(nwalker, ndim, lnL,)
 sampler.run_mcmc(pos, 100, progress=True);
 flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
 results={'flat_chains':flat_samples, 'analysis':analysis_metadata}
-save_pickle(results, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains_article/'+analysis_metadata['name']+'.pkl')
-#save_pickle(flat_samples, f'/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/richness_mass_from_DC2/chains/manuscript_analysis_full_cosmology_{t}.pkl')
+save_pickle(results, f'../chains/'+analysis_metadata['name']+'.pkl')

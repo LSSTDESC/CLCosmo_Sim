@@ -17,4 +17,4 @@ def save_pickle(dat, filename, **kwargs):
 catalog = GCRCatalogs.load_catalog('cosmoDC2_v1.1.4_redmapper_v0.8.1')
 quantity = ['cluster_id','ra', 'dec', 'redshift', 'redshift_err', 'richness', 'richness_err']
 dat = catalog.get_quantities(quantity)
-save_pickle(Table(dat), 'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+save_pickle(Table(dat), '../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
