@@ -1,6 +1,4 @@
 import numpy as np
-import pickle
-from statistics import median
 
 def binning(corner): return [[corner[i],corner[i+1]] for i in range(len(corner)-1)]
 
