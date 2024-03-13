@@ -53,7 +53,7 @@ plt.tick_params(axis='both', which="both", labelsize= 13)
 
 
 
-suff = '_full_coverage'
+suff = ''
 #suff=''
 data = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles = data['stacked profile']
@@ -96,13 +96,18 @@ plt.savefig(f'../fig/stacked_redmapper_profiles_true_source_redshifts{suff}.png'
 plt.figure(figsize=(7,4))
 index = 12
 fmt = ['-', '--', '.']
-label = ['cosmoDC2 - true source redshifts', 'cosmoDC2 - BPZ redshifts', 'cosmoDC2 - FlexZBoost redshifts']
-for i, data_name in enumerate(['../data/stacked_esd_profiles_redmapper_true.pkl', '../data/stacked_esd_profiles_redmapper_BPZ.pkl', '../data/stacked_esd_profiles_redmapper_flex.pkl']):
+label = ['cosmoDC2 - BPZ redshifts', 'cosmoDC2 - FlexZBoost redshifts']    
+data_true = np.load('../data/stacked_esd_profiles_redmapper_true.pkl', allow_pickle=True)
+profiles_true = data['stacked profile']
+for i, data_name in enumerate(['../data/stacked_esd_profiles_redmapper_BPZ.pkl', '../data/stacked_esd_profiles_redmapper_flex.pkl']):
+    covariances_true = data['stacked covariance']
     data = np.load(data_name, allow_pickle=True)
     profiles = data['stacked profile']
     covariances = data['stacked covariance']
-    plt.loglog(profiles['radius'][index], profiles['gt'][index], fmt[i], label = label[i])
-plt.ylabel(r'$\Delta\Sigma$', fontsize=14)
+    plt.plot(profiles['radius'][index], (profiles['gt'][index] - profiles_true['gt'][index])/profiles_true['gt'][index],
+               fmt[i], label = label[i])
+plt.xscale('log')
+plt.ylabel(r'$\Delta\Sigma (biais to no photoz case, %)$', fontsize=14)
 plt.xlabel('R', fontsize=14)
 plt.legend()
 plt.tick_params(axis='both', which="both", labelsize= 13)
