@@ -14,18 +14,14 @@ cosmo_clmm = Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448,
 cosmo_ccl  = ccl.Cosmology(Omega_c=0.265-0.0448, Omega_b=0.0448, h=0.71, A_s=2.1e-9, n_s=0.96, Neff=0, Omega_g=0)
 cosmo_astropy = FlatLambdaCDM(H0=71.0, Om0=0.265, Ob0 = 0.0448)
 import emcee
-import CL_WL_mass_conversion as utils
-
 #ccl m-c relations
-deff = ccl.halos.massdef.MassDef(200, 'critical', c_m_relation=None)
-concDiemer15 = ccl.halos.concentration.ConcentrationDiemer15(mdef=deff)
-concDuffy08 = ccl.halos.concentration.ConcentrationDuffy08(mdef=deff)
-concPrada12 = ccl.halos.concentration.ConcentrationPrada12(mdef=deff)
-concBhattacharya13 = ccl.halos.concentration.ConcentrationBhattacharya13(mdef=deff)
-
-#ccl halo bias
-definition = ccl.halos.massdef.MassDef(200, 'matter', c_m_relation=None)
-halobias = ccl.halos.hbias.HaloBiasTinker10(cosmo_ccl, mass_def=definition, mass_def_strict=True)
+deff = ccl.halos.massdef.MassDef(200, 'critical')
+concDiemer15 = ccl.halos.concentration.ConcentrationDiemer15(mass_def=deff)
+concDuffy08 = ccl.halos.concentration.ConcentrationDuffy08(mass_def=deff)
+concPrada12 = ccl.halos.concentration.ConcentrationPrada12(mass_def=deff)
+concBhattacharya13 = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
+halobias = ccl.halos.hbias.tinker10.HaloBiasTinker10(mass_def='200m', mass_def_strict=True)
+definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
   
 class HaloMass_fromStackedProfile():
     r"""a class for the estimation of weak lensing mass from shear profile"""
@@ -79,9 +75,8 @@ class HaloMass_fromStackedProfile():
             self.ds_nobias = self.moo.eval_excess_surface_density_2h(self.R, self.cluster_z, halobias=1)
             logm_array = np.linspace(11, 17, 200)
             #ccl
-            halobias_array = halobias.get_halo_bias(cosmo_ccl, 10**logm_array, 
-                                                    1./(1.+ self.cluster_z), 
-                                                    mdef_other = definition)
+            halobias_array = halobias(cosmo_ccl, 10**logm_array, 
+                                                    1./(1.+ self.cluster_z))
             def hbias(logm200c): return np.interp(logm200c, logm_array, halobias_array)
             self.hbias = hbias
             
@@ -121,7 +116,7 @@ class HaloMass_fromStackedProfile():
     def ds_2h_term(self, halobias):
         return halobias * self.ds_nobias
     
-    def m200m_c200m_from_logm200c_c200c(self, m200c, c200c, z):
+    def m200m_c200m_from_logm200c_c200c(self, m200c, c200c, z, conc_model):
         r"""
         conversion
         Attributes:
@@ -139,8 +134,9 @@ class HaloMass_fromStackedProfile():
         c200m: folat
             cluster concentration in 200m convention
         """
-        m200m, c200m=utils.M_to_M_nfw(m200c, c200c, 200, self.cluster_z, 'critical', 200, 'mean', cosmo_astropy)
-        return m200m, c200m
+        m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc_model)
+        m200m = m200c_to_m200m(cosmo_ccl, m200c, 1/(1+z))
+        return m200m, c200c
 
     def c200c_model(self, name='Diemer15'):
         r"""
@@ -176,7 +172,7 @@ class HaloMass_fromStackedProfile():
         self.moo.set_mass(10**logm200), self.moo.set_concentration(c200)
         y_predict = self.ds_1h_term(self.moo, self.R)
         if self.use_two_halo_term == True:
-            M200m, c200m = self.m200m_c200m_from_logm200c_c200c(10**logm200, c200, self.cluster_z)
+            M200m, c200m = self.m200m_c200m_from_logm200c_c200c(10**logm200, c200, self.cluster_z, self.cModel)
             halobias_val = self.hbias(np.log10(M200m))
             y_predict = y_predict + self.ds_2h_term(halobias_val)
         delta = (y_predict - self.ds_obs)
@@ -335,7 +331,7 @@ class HaloMass_fromStackedProfile():
         #compute model:
         ds_1h_term = self.ds_1h_term(self.moo, self.R)
         if self.use_two_halo_term:
-            M200m, c200m = self.m200m_c200m_from_logm200c_c200c(10**logm_fit, c_fit, self.cluster_z)
+            M200m, c200m = self.m200m_c200m_from_logm200c_c200c(10**logm_fit, c_fit, self.cluster_z, self.cModel)
             halobias_fit = self.hbias(np.log10(M200m))
             ds_2h_term =  self.ds_2h_term(halobias_fit)
         else: ds_2h_term = 0
@@ -364,7 +360,6 @@ def fit_WL_cluster_mass(profile = None, covariance = None, is_covariance_diagona
     tab = {name : [] for name in fit_data_name_tot}
     print('fitting...')
     for k, p in enumerate(profile):
-        print(k)
         cluster_z=p['z_mean']
         radius = p['radius']
         cov = covariance[k]['cov_t']

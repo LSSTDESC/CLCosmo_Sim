@@ -3,7 +3,6 @@ import numpy as np
 analysis = {}
 
 def add_name(analysis):
-    
     #kind of fit
     name = 'MCMC_'
     if analysis['fit_cosmo']: fit_ = 'fit_m-r+cosmo_'
