@@ -1,0 +1,14 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Fri Mar 22 15:15:10 CET 2024
+* Job name:             extract_cosmodc2_redmapper
+* Job id:               4800782
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0119
+****************************************************************

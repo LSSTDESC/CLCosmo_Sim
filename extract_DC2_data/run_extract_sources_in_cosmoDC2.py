@@ -2,7 +2,7 @@ import numpy as np
 import GCRCatalogs
 GCRCatalogs.set_root_dir_by_site('in2p3')
 import healpy
-import glob
+import glob, sys
 import clmm
 import time
 import _utils_photometric_redshifts
@@ -79,7 +79,7 @@ def qserv_query(lens_z, lens_distance, ra, dec, rmax = 10):
     query += "data.galaxy_id as galaxy_id, "
     query += "data.mag_i, data.mag_r, data.mag_y, "
     query += "data.shear_1 as shear1, data.shear_2 as shear2, data.convergence as kappa, "
-    query += "data.ellipticity_1_true as e1_true, data.ellipticity_2_true as e2_true " 
+    query += "data.ellipticity_1_true as e1_true_uncorr, data.ellipticity_2_true as e2_true_uncorr " 
     query += "FROM cosmoDC2_v1_1_4_image.data as data "
     query += f"WHERE data.redshift >= {zmin} AND data.redshift < {zmax} "
     query += f"AND scisql_s2PtInCircle(coord_ra, coord_dec, {ra}, {dec}, {theta_max}) = 1 "
@@ -99,8 +99,6 @@ for n, lens in enumerate(lens_catalog_truncated):
     
     if len(lens_catalog_truncated) == 0: continue
 
-    #print('halo index in list' + str(mask_n[n]))
-    #cluster metadata
     z, ra, dec=lens['redshift'], lens['ra'], lens['dec']
     cluster_id=lens['cluster_id']
     lens_distance=cosmo.eval_da(z)
@@ -139,28 +137,24 @@ for n, lens in enumerate(lens_catalog_truncated):
                                   'sigmac_estimate_0', 'sigmac_estimate_1', 'sigmac_estimate_2', 
                                   'z_estimate_0', 'z_estimate_1', 'z_estimate_2', 
                                   'galaxy_id', 'photoz_mean', 'photoz_mode', 'photoz_odds'])
-            
             photoz_gc_ = GCRCatalogs.load_catalog(gc_)
             for i, hp in enumerate(healpix):
                 #browse healpix pixels
                 print(f'-----> heapix pixel = ' + str(hp))
                 chunk = photoz_gc_.get_quantities(query_photoz(), native_filters=[f'healpix_pixel=={hp}'], return_iterator=True)
-                
                 for j in range(3):
-                    
                     #browse chunk data
                     print('chunk = ' + str(j))
-                    dat_extract_photoz_chunk = Table(next(chunk))
-                    print(f'full healpix = ' + str(len(dat_extract_photoz_chunk['galaxy_id'])))
-                    
+                    try: 
+                        dat_extract_photoz_chunk = Table(next(chunk))
+                    except: continue
+                    print(f'number of galaxies in the full healpix = ' + str(len(dat_extract_photoz_chunk['galaxy_id'])))
                     #use only selected galaxies
                     dat_extract_photoz_chunk_truncated = dat_extract_photoz_chunk[np.isin(dat_extract_photoz_chunk['galaxy_id'],
                                                                                           table_photoz['galaxy_id'])]
                     if len(dat_extract_photoz_chunk_truncated['galaxy_id']) == 0: continue
-                    
-                    print('truncated healpix = ' + str(len(dat_extract_photoz_chunk_truncated['galaxy_id'])))
+                    print('number of galaxies tageted in the healpix = ' + str(len(dat_extract_photoz_chunk_truncated['galaxy_id'])))
                     pzbins_table=np.array([z_bins for i in range(len(dat_extract_photoz_chunk_truncated['photoz_pdf'].data))])
-                    
                     #compute WL weights with 
                     pz_quantities_chunk = _utils_photometric_redshifts.compute_photoz_quantities(z, dat_extract_photoz_chunk_truncated['photoz_pdf'], 
                                                                            pzbins_table, n_samples_per_pdf=3, cosmo=cosmo,
@@ -184,10 +178,8 @@ for n, lens in enumerate(lens_catalog_truncated):
     
     if _config_extract_sources_in_cosmoDC2.save_catalog:
         save_pickle(dat_extract, where_to_save + name_cat + '.pkl')
-        
-    compute_individual_lensing_profile = _config_extract_sources_in_cosmoDC2.compute_individual_lensing_profile
     
-    if compute_individual_lensing_profile:
+    if _config_extract_sources_in_cosmoDC2.compute_individual_lensing_profile:
         cluster_data = [cluster_id, ra, dec, z, lens['richness']]
         names = _config_lensing_profiles.names
         #do magnitude selection (magnitude)
@@ -196,7 +188,8 @@ for n, lens in enumerate(lens_catalog_truncated):
         data_to_save = cluster_data
         for label_ in _config_lensing_profiles.label_pz:
             if label_ != 'true':
-                mask_z = dat_extract_mag_cut['p_background' + '_' + label_] > _config_lensing_profiles.p_background_min
+                mask_z = dat_extract_mag_cut['p_background'+'_'+label_] > _config_lensing_profiles.p_background_min
+                mask_z *= dat_extract_mag_cut['photoz_mean'+'_'+label_] > z + _config_lensing_profiles.Dz_background
             else: 
                 mask_z = dat_extract_mag_cut['z'] > z + 0.1
             dat_extract_mag_cut_bkgd_pz = dat_extract_mag_cut[mask_z]
