@@ -1,5 +1,6 @@
 import clmm
 from astropy.table import QTable, Table, vstack, join, hstack
+from scipy.stats import binned_statistic
 
 def compute_lensing_profile(cluster_id, ra, dec, z, bin_edges, label, table, cosmo):
     
@@ -21,5 +22,8 @@ def compute_lensing_profile(cluster_id, ra, dec, z, bin_edges, label, table, cos
                                        tan_component_in_err=None, cross_component_in_err=None,
                                        weights_in='w_ls', weights_out='W_l')
     data = ce.data[0]
+    #r = cosmo.rad2mpc(theta1, z)
+    #stat_sum_wls, bin_edges, binnumber = binned_statistic(r, cl.galcat['w_ls'], statistic='sum', bins=bin_edges)
+    #stat_Ngt, bin_edges, binnumber = binned_statistic(r, cl.galcat['w_ls']*cl.galcat['dst'],  statistic='sum', bins=bin_edges)
     data_prf = [data['gt'], data['gx'], data['W_l'], data['radius']]
     return data_prf

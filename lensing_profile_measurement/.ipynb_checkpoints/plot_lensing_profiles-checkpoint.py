@@ -4,6 +4,26 @@ import matplotlib.pyplot as plt
 sys.path.append('../')
 import _redshift_richness_bins as analysis
 
+plt.figure(figsize=(7,4))
+index = 12
+fmt = ['-', '--', '.']
+suff = '_full_coverage'
+data_true = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
+profiles_true = data_true['stacked profile']
+z = data_true['stacked profile']['z_mean']
+for z_bin in analysis.Z_bin:
+    mask = (z > z_bin[0])*(z < z_bin[1])
+    r = np.mean(profiles_true['radius'][mask], axis=0)
+    ds = np.mean(profiles_true['gt'][mask], axis=0)
+    plt.loglog(r, ds, label=f'{z_bin[0]:.1f} < z < {z_bin[1]:.1f}')
+plt.xscale('log')
+plt.ylabel(r'$\Delta\Sigma$', fontsize=14)
+plt.xlabel('R', fontsize=14)
+plt.legend()
+plt.tick_params(axis='both', which="both", labelsize= 13)
+plt.savefig('../fig/stacked_redmapper_profiles_attenuation.png', bbox_inches='tight', dpi=100)
+
+
 data = np.load('../data/ind_profile_redmapper.pkl', allow_pickle=True)
 plt.figure(figsize=(7,4))
 
@@ -51,10 +71,6 @@ plt.legend()
 plt.tick_params(axis='both', which="both", labelsize= 13)
 #plt.savefig('../fig/lensing_profiles.png', bbox_inches='tight', dpi=300)
 
-
-
-suff = ''
-#suff=''
 data = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles = data['stacked profile']
 covariances = data['stacked covariance']
@@ -91,16 +107,16 @@ for i, z_bin in enumerate(Z_bin):
 
 for ax in fig.get_axes():
     ax.label_outer()
-plt.savefig(f'../fig/stacked_redmapper_profiles_true_source_redshifts{suff}.png', bbox_inches='tight', dpi=300)
+plt.savefig(f'../fig/stacked_redmapper_profiles_true_source_redshifts{suff}.png', bbox_inches='tight', dpi=100)
 
 plt.figure(figsize=(7,4))
 index = 12
 fmt = ['-', '--', '.']
 label = ['cosmoDC2 - BPZ redshifts', 'cosmoDC2 - FlexZBoost redshifts']    
-data_true = np.load('../data/stacked_esd_profiles_redmapper_true.pkl', allow_pickle=True)
+data_true = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles_true = data['stacked profile']
 z = data_true['stacked profile']['z_mean'][index]
-for i, data_name in enumerate(['../data/stacked_esd_profiles_redmapper_BPZ.pkl', '../data/stacked_esd_profiles_redmapper_flex.pkl']):
+for i, data_name in enumerate([f'../data/stacked_esd_profiles_redmapper_BPZ{suff}.pkl', f'../data/stacked_esd_profiles_redmapper_flex{suff}.pkl']):
     covariances_true = data['stacked covariance']
     data = np.load(data_name, allow_pickle=True)
     profiles = data['stacked profile']
@@ -113,4 +129,4 @@ plt.xlabel('R', fontsize=14)
 plt.legend()
 plt.title(f'<z> = {z:.2f}')
 plt.tick_params(axis='both', which="both", labelsize= 13)
-plt.savefig('../fig/stacked_redmapper_profiles_true_BPZ_flex_redshifts.png', bbox_inches='tight', dpi=300)
+plt.savefig(f'../fig/stacked_redmapper_profiles_true_BPZ_flex_redshifts{suff}.png', bbox_inches='tight', dpi=100)

@@ -6,7 +6,8 @@ def save_pickle(dat, filename, **kwargs):
      file = open(filename,'wb')
      pickle.dump(dat, file)
      file.close()
-files = glob.glob('./ind_profile_redmapper_per_cluster_index/ind_profile_*')
+suff ='_random'
+files = glob.glob('./ind_profile_redmapper_per_cluster'+suff+'_index/ind_profile_*')
 for i, f in enumerate(files):
     data_f = np.load(f, allow_pickle=True)
     if i==0:
@@ -14,4 +15,4 @@ for i, f in enumerate(files):
         continue
     else:
         data_f0 = vstack([data_f0, data_f])
-save_pickle(data_f0, 'ind_profile_redmapper.pkl')
+save_pickle(data_f0, 'ind_profile_redmapper'+suff+'.pkl')
