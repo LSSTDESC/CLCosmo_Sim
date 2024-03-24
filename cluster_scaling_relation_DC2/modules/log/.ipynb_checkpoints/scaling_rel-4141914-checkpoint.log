@@ -1,0 +1,28 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Wed Mar 20 17:35:07 CET 2024
+* Job name:             scaling_rel
+* Job id:               4141914
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0190
+****************************************************************
+--- WLxN ---
+--- N ---
+--- WL ---
+--- MxN ---
+--- M ---
+-----     observed lensing profiles loaded + covariances
+-----     theoretical lensing profiles computed
+-----     shear-richness covariances loaded
+-----     log-slope of the halo mass function loaded
+-----     \gamma_1 * Cov(\Delta\Sigma, \lambda|m,z)
+start
+-120.35941057890304
+0.23055481910705566
+  0%|                                                                                                                                                                             | 0/200 [00:00<?, ?it/s]  0%|▊                                                                                                                                                                  | 1/200 [00:21<1:11:12, 21.47s/it]  1%|█▋                                                                                                                                                                 | 2/200 [00:43<1:11:19, 21.61s/it]

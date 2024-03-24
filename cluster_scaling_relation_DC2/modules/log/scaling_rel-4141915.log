@@ -1,0 +1,40 @@
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+* Date:                 Wed Mar 20 17:35:08 CET 2024
+* Job name:             scaling_rel
+* Job id:               4141915
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0359
+****************************************************************
+--- WLxN ---
+--- N ---
+--- WL ---
+--- MxN ---
+--- M ---
+-----     observed lensing profiles loaded + covariances
+-----     theoretical lensing profiles computed
+Traceback (most recent call last):
+  File "/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_scaling_relation_DC2/modules/run_mcmc_cluster_scaling_relation_from_lensing_profiles.py", line 150, in <module>
+    cov, cov_err = GammaLambda_Cov.read_covariance(photoz = analysis_metadata['photoz'], radius = r)
+  File "/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_scaling_relation_DC2/modules/_read_covariance_shear_richness.py", line 23, in read_covariance
+    data_cov =  load(path_cov+photoz+f'_z{z_bin[0]:.2f}-{z_bin[1]:.2f}_cov.pkl')
+  File "/pbs/throng/lsst/users/cpayerne/CLCosmo_Sim/cluster_scaling_relation_DC2/modules/_read_covariance_shear_richness.py", line 12, in load
+    with open(filename, 'rb') as fin:
+FileNotFoundError: [Errno 2] No such file or directory: '/pbs/throng/lsst/users/cpayerne/cov_CLMassDC2/data/covariance/flex_z0.20-0.30_cov.pkl'
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Wed Mar 20 17:35:25 CET 2024
+Job informations can be found using these commands:
+Accounting:
+sacct -j 4141915
+Efficiency:
+seff 4141915
+****************************************************************

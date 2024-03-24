@@ -46,13 +46,16 @@ data = np.load(analysis_WL_metadata['data_path'], allow_pickle=True)
 profiles = data['stacked profile']
 covariances = data['stacked covariance']
 
-if analysis_WL_metadata['cM'] == None: 
-    fix_c = False
-else: fix_c = True
+fix_c = False if analysis_WL_metadata['cM_relation'] == None else True
 
-mass_fit =  fit_mass.fit_WL_cluster_mass(profile = profiles, covariance = covariances, a = 0, b =  analysis_WL_metadata['r_min'], 
-                                       rmax = analysis_WL_metadata['r_max'], two_halo_term = analysis_WL_metadata['two_halo_term'], fix_c = fix_c,halo_model = analysis_WL_metadata['halo_profile'],
-                                      mc_relation=analysis_WL_metadata['cM'], method='minuit')
+mass_fit =  fit_mass.fit_WL_cluster_mass(profile = profiles, covariance = covariances,
+                                         a = 0, b =  analysis_WL_metadata['radius_min'], 
+                                         rmax = analysis_WL_metadata['radius_max'], 
+                                         two_halo_term =analysis_WL_metadata['two_halo'], 
+                                         fix_c = fix_c,
+                                         halo_model=analysis_WL_metadata['density_profile'],
+                                         mc_relation=analysis_WL_metadata['cM_relation'], 
+                                         method='minuit')
 
 res = {'masses':mass_fit,}
 save_pickle(res, analysis_WL_metadata['name_save'])

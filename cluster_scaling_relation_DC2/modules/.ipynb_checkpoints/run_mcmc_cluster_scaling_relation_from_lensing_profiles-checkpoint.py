@@ -6,7 +6,7 @@ from multiprocessing import Pool
 import emcee
 import time
 import pickle
-import _analysis_scaling_relation_from_lensing_profiles as analysis_list
+import _analysis_scaling_relation as analysis_list
 def save_pickle(dat, filename, **kwargs):
     file = open(filename,'wb')
     pickle.dump(dat, file)
@@ -16,7 +16,7 @@ def load(filename, **kwargs):
     with open(filename, 'rb') as fin:
         return pickle.load(fin, **kwargs)
     
-import read_covariance_shear_richness as GammaLambda_Cov
+import _read_covariance_shear_richness as GammaLambda_Cov
 
 sys.path.append('../../')
 import _redshift_richness_bins as analysis
@@ -32,11 +32,8 @@ import CL_COUNT_class_likelihood as likelihood
 import CL_LENSING_cluster_lensing as cl_lensing
 CLCount_likelihood = likelihood.Likelihood()
 
-
-#code, analysis_type, index_analysis = sys.argv
-#analysis_metadata = analysis_list.analysis[str(analysis_type)][int(index_analysis)]
-code, index_analysis = sys.argv
-analysis_metadata = analysis_list.analysis_list[int(index_analysis)]
+code, config_name, index_analysis = sys.argv
+analysis_metadata = analysis_list.config[config_name][int(index_analysis)]
 fit_cosmo = analysis_metadata['fit_cosmo']
 
 #cosmology
@@ -65,14 +62,14 @@ theta_purity = [a_nc, b_nc, a_rc, b_rc]
 a_nc, b_nc, a_mc, b_mc = 1.1321, 0.7751, 13.31, 0.2025
 theta_completeness = [a_nc, b_nc, a_mc, b_mc]
 #rm_relation
-log10m0, z0 = np.log10(10**14.2), .4
+log10m0, z0 = np.log10(10**14.3), .5
 proxy_mu0, proxy_muz, proxy_mulog10m =  3.091, 0, 1.05*np.log(10)
-proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m =  0.594, 0., 0.026*np.log(10)
+proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m =  0.594, 0., 0.
 theta_rm = [log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
 
-richness_grid = np.logspace(np.log10(20), np.log10(200), 100)
-logm_grid = np.linspace(12, 15.5, 101)
-z_grid = np.linspace(.2, 1, 102)
+richness_grid = np.logspace(np.log10(20), np.log10(200), 150)
+logm_grid = np.linspace(12, 15.5, 151)
+z_grid = np.linspace(.2, 1, 152)
 
 grids = {'logm_grid': logm_grid, 'z_grid': z_grid, 'richness_grid':richness_grid}
 count_modelling = {'dNdzdlogMdOmega':None,'richness_mass_relation':None, 'completeness':None, 'purity':None }
@@ -95,23 +92,24 @@ covariances = data['stacked covariance']
 r = profiles['radius'][0]
 
 # Count
-table_redmapper = load('../../data/catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+table_redmapper = load('../../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
 N_obs, proxy_edges, z_edges = np.histogram2d(table_redmapper['redshift'], 
                                                         table_redmapper['richness'],
                                                    bins=[analysis.z_corner, analysis.rich_corner])
 
 #Masses
-mass_data = load('/pbs/throng/lsst/users/cpayerne/CLMassDC2/notebooks/plots/WL_mean_masses/halomodel_nfw_freec.pkl')['masses']
-log10Mass = np.zeros(N_obs.T.shape)
-log10Mass_err = np.zeros(N_obs.T.shape)
-for i, richness_bin in enumerate(Richness_bin):
-    for j, redshift_bin in enumerate(Z_bin):
-        maskz = (mass_data['z_mean'] > redshift_bin[0])*(mass_data['z_mean'] < redshift_bin[1])
-        maskr = (mass_data['obs_mean'] > richness_bin[0])*(mass_data['obs_mean'] < richness_bin[1])
-        mask = maskz * maskr
-        mass_in_bin = mass_data[mask]
-        log10Mass[i,j] = np.array(mass_in_bin['log10M200c_WL'])
-        log10Mass_err[i,j] = np.array(mass_in_bin['err_log10M200c_WL'])
+if (analysis_metadata['type']=='M') or (analysis_metadata['type']=='MxN') or (analysis_metadata['type']=='M_DC2xN') or (analysis_metadata['type']=='M_DC2'):
+    mass_data = load(analysis_metadata['mass_file'])['masses']
+    log10Mass = np.zeros(N_obs.T.shape)
+    log10Mass_err = np.zeros(N_obs.T.shape)
+    for i, richness_bin in enumerate(Richness_bin):
+        for j, redshift_bin in enumerate(Z_bin):
+            maskz = (mass_data['z_mean'] > redshift_bin[0])*(mass_data['z_mean'] < redshift_bin[1])
+            maskr = (mass_data['obs_mean'] > richness_bin[0])*(mass_data['obs_mean'] < richness_bin[1])
+            mask = maskz * maskr
+            mass_in_bin = mass_data[mask]
+            log10Mass[i,j] = np.array(mass_in_bin['log10M200c_WL'])
+            log10Mass_err[i,j] = np.array(mass_in_bin['err_log10M200c_WL'])
 
 #lensing profiles
 if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
@@ -144,7 +142,6 @@ if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
 
     r_reshaped = r[(r > rlow)*(r < rup)]
     print('-----     observed lensing profiles loaded + covariances')
-    #cluster_lensing = np.zeros([len(r), len(logm_grid), len(z_grid)])#
     cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, analysis_metadata['cM_relation'],
                                                          logm_grid, z_grid, cosmo, cosmo_clmm,
                                                         two_halo = analysis_metadata['two_halo'])
@@ -196,16 +193,10 @@ def lnL(theta):
                   'CCL_cosmology': cosmo_new, 
                   'halo_mass_distribution': hmd_new}
     
-    if fit_cosmo == True:
-        compute_new = {'compute_dNdzdlogMdOmega':True,
-                       'compute_richness_mass_relation':True, 
-                       'compute_completeness':False, 
-                       'compute_purity':False}
-    else:
-        compute_new = {'compute_dNdzdlogMdOmega':False,
-                       'compute_richness_mass_relation':True, 
-                       'compute_completeness':False, 
-                       'compute_purity':False}
+    compute_new = {'compute_dNdzdlogMdOmega':fit_cosmo,
+                   'compute_richness_mass_relation':True, 
+                   'compute_completeness':False, 
+                   'compute_purity':False}
         
     adds_N = {'add_purity':True, 'add_completeness':True}
     adds_NDS = {'add_purity':False, 'add_completeness':True}
@@ -242,13 +233,14 @@ def lnL(theta):
     if analysis_metadata['type'] == 'WLxN': return lnLCLWL + lnLCLCount
     if analysis_metadata['type'] == 'MxN': return lnLCLM + lnLCLCount
    
-
 if fit_cosmo == True:
     initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Omega_m_true, sigma8_true]
     ndim = 8
 else: 
     initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
     ndim = 6
+    #initial = [proxy_mu0, proxy_mulog10m, proxy_sigma0, proxy_sigmalog10m]
+    #ndim = 4
 t = time.time()
 print(lnL(initial))
 tf = time.time()
@@ -256,7 +248,7 @@ print(tf-t)
 nwalker = 100
 pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
 sampler = emcee.EnsembleSampler(nwalker, ndim, lnL,)
-sampler.run_mcmc(pos, 100, progress=True);
+sampler.run_mcmc(pos, 200, progress=True);
 flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
 results={'flat_chains':flat_samples, 'analysis':analysis_metadata}
-save_pickle(results, f'../chains/'+analysis_metadata['name']+'.pkl')
+save_pickle(results, f'../chains/'+analysis_metadata['type']+'/'+analysis_metadata['name']+'.pkl')
