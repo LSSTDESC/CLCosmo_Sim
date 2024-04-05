@@ -3,9 +3,9 @@ import copy, glob
 import _add_name_save
 analysis = {}
 
-lensing_data_truez = '../../data/stacked_esd_profiles_redmapper_true.pkl'
-lensing_data_bpz = '../../data/stacked_esd_profiles_redmapper_BPZ.pkl'
-lensing_data_flex = '../../data/stacked_esd_profiles_redmapper_flex.pkl'
+lensing_data_truez = '../../data/stacked_esd_profiles_redmapper_true_full_coverage.pkl'
+lensing_data_bpz = '../../data/stacked_esd_profiles_redmapper_BPZ_full_coverage.pkl'
+lensing_data_flex = '../../data/stacked_esd_profiles_redmapper_flex_full_coverage.pkl'
 #impact_c_m
 analysis_Duffy08 = {
               'type': 'WLxN',

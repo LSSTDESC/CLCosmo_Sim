@@ -278,9 +278,9 @@ if 'WL' in analysis_metadata['type']:
         for j, m_bin in enumerate(Richness_bin):
             label_z =   f'{z_bin[0]:.1f} < z < {z_bin[1]:.1f}'
             label_M = f'{m_bin[0]:.0f} < ' + r'$\lambda$' +f' < {m_bin[1]:.0f}'
-            axs[j,i].errorbar(r, DS_obs_full[:,j,i], Err_obs_full[:,j,i], 
-                              linestyle='none', marker = '.', markersize=3, color='dodgerblue')
-            axs[j,i].loglog(r[(r > rlow)*(r < rup)], fit['WL'][:,j,i], color = 'C2')
+            axs[j,i].errorbar(r, DS_obs_full[:,j,i], Err_obs_full[:,j,i], color = 'k',
+                              linestyle='none', marker = '.', capsize=2,  markersize=3,)
+            axs[j,i].loglog(r[(r > rlow)*(r < rup)], fit['WL'][:,j,i], color = 'C1', zorder=0, lw=1)
             axs[j,i].set_xscale('log')
             axs[j,i].set_yscale('log')
             axs[j,i].set_ylim(1e12, 3e14)

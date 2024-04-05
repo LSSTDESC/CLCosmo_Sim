@@ -5,7 +5,7 @@ analysis = {}
 #Modeling_choices
 
 #impact halo profile
-analysis_1h_nfw = {'data_path': '../../data/stacked_esd_profiles_redmapper_true.pkl',
+analysis_1h_nfw = {'data_path': '../../data/stacked_esd_profiles_redmapper_true_full_coverage.pkl',
                                 'photoz':'Truez',
                                 'density_profile': 'nfw',
                                 'cM_relation': None,
@@ -52,11 +52,11 @@ analysis['2h'] = [analysis_2h_nfw_Diemer15_true]
 # ""
 # #impact of photoz
 analysis_1h_nfw_Diemer15_bpz = analysis_1h_nfw_Diemer15_true.copy()
-analysis_1h_nfw_Diemer15_bpz['data_path'] = '../../data/stacked_esd_profiles_redmapper_BPZ.pkl'
+analysis_1h_nfw_Diemer15_bpz['data_path'] = '../../data/stacked_esd_profiles_redmapper_BPZ_full_coverage.pkl'
 analysis_1h_nfw_Diemer15_bpz['photoz'] = 'BPZ'
 
 analysis_1h_nfw_Diemer15_flex = analysis_1h_nfw_Diemer15_true.copy()
-analysis_1h_nfw_Diemer15_flex['data_path'] = '../../data/stacked_esd_profiles_redmapper_flex.pkl'
+analysis_1h_nfw_Diemer15_flex['data_path'] = '../../data/stacked_esd_profiles_redmapper_flex_full_coverage.pkl'
 analysis_1h_nfw_Diemer15_flex['photoz'] = 'flex'
 
 analysis['photoz'] = [analysis_1h_nfw_Diemer15_bpz, analysis_1h_nfw_Diemer15_flex]
