@@ -2,6 +2,7 @@ import numpy as np
 import pyccl as ccl
 import scipy
 import clmm
+import clmm.utils as u
 from scipy.integrate import quad,simps, dblquad
 from scipy import interpolate
 import CL_COUNT_cluster_abundance as cl_count
@@ -9,7 +10,10 @@ import pyccl as ccl
 
 def binning(edges): return [[edges[i],edges[i+1]] for i in range(len(edges)-1)]
 
-def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two_halo = False):
+def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, 
+                            two_halo = False, 
+                            boost_factor=False,
+                            return_two_halo_term=False):
     r"""
     Compute the lensing signals on a logm; z grid
     Attributes:
@@ -33,7 +37,6 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two
     cluster_lensing_grid: array
         tabulated lensing signal
     """
-    
     #concentration
     concentration_grid = np.zeros([len(logm_grid), len(z_grid)])
     deff = ccl.halos.massdef.MassDef(200, 'critical')
@@ -46,12 +49,20 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two
     if cM == 'Bhattacharya13':
         conc = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
     for i, z in enumerate(z_grid):
-        lnc = np.log(conc._concentration(cosmo_ccl, 10**logm_grid, 1./(1. + z))) 
-        concentration_grid[:,i] = np.exp(lnc)  
+        concentration_grid[:,i] = conc._concentration(cosmo_ccl, 10**logm_grid, 1./(1. + z))
+    
     #excess surface density
+    if boost_factor:
+        boost_factor_grid = np.zeros([ len(R), len(logm_grid), len(z_grid)])
+        rs_grid = np.zeros([len(logm_grid), len(z_grid)])
+        for i, z in enumerate(z_grid):
+            r200c = clmm.compute_rdelta(mdelta=10**logm_grid, redshift=z, 
+                                        cosmo=cosmo_clmm, massdef='critical', delta_mdef=200)
+            rs_grid[:,i] = r200c / concentration_grid[:,i]
+            for j, logm in enumerate(logm_grid):
+                boost_factor_grid[:,j,i] = u.compute_powerlaw_boost(R, rscale=rs_grid[j,i], boost0=0.1, alpha=-1.0)
     
     cluster_lensing_grid = np.zeros([ len(R), len(logm_grid), len(z_grid)])
-    
     for i in range(len(logm_grid)):
         for j in range(len(z_grid)):
             cluster_lensing_grid[:,i,j] = clmm.compute_excess_surface_density(R, 10**logm_grid[i], 
@@ -59,8 +70,7 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two
                                                                             cosmo_clmm, delta_mdef=200,
                                                                             halo_profile_model='nfw',
                                                                             massdef='critical')
-    if two_halo == True:
-        
+    if two_halo:
         definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
         halobias_200m_fct = ccl.halos.hbias.tinker10.HaloBiasTinker10(mass_def='200m', mass_def_strict=True)
         m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc)
@@ -77,8 +87,11 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm, two
             for i in range(len(logm_grid)):
                 cluster_lensing_grid_2h[:,i,j] = ds_2h * halo_bias_200m[i,j]
         cluster_lensing_grid = cluster_lensing_grid + cluster_lensing_grid_2h
+    if boost_factor:  
+        cluster_lensing_grid=cluster_lensing_grid/boost_factor_grid                                          
         
-    return cluster_lensing_grid
+    if return_two_halo_term: return cluster_lensing_grid_2h, cluster_lensing_grid
+    else: return cluster_lensing_grid
 
 def Cluster_dNd0mega_Lensing_ProxyZ(bins, integrand_count = None, cluster_lensing = None, lensing_radius = None, grids = None): 
     r"""

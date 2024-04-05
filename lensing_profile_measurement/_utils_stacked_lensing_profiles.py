@@ -2,6 +2,7 @@ import numpy as np
 from astropy.table import Table
 import random
 import pickle
+import healpy
 from scipy.integrate import quad
 
 def load(filename, **kwargs):
@@ -125,13 +126,12 @@ def stacked_profile(profile = None,r_in = '1',gt_in = '1', gx_in = '1',
     colname = colname + add_columns_to_bin
     data = {name : [] for name in colname}
     for z_bin in Z_bin:
-        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
+        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] >= z_bin[0])
         for obs_bin in Obs_bin:
-            condition = condition_z * (profile[obs_name] < obs_bin[1]) * (profile[obs_name] > obs_bin[0])
+            condition = condition_z * (profile[obs_name] < obs_bin[1]) * (profile[obs_name] >= obs_bin[0])
             if condition.shape == (len(profile), 1):
                 condition = [c[0] for c in condition]
             p = profile[condition]
-            print(len(p))
             if len(p) == 0: continue
             obs_mean, obs_rms = np.average(p[obs_name]), np.std(p[obs_name])/np.sqrt(len(p))
             z_mean = np.average(p[z_name])
@@ -148,33 +148,6 @@ def stacked_profile(profile = None,r_in = '1',gt_in = '1', gx_in = '1',
                 data[name].append(array[i])
     data = Table(data)
     return data
-
-def av_sigma_2(zl, cosmo=None):
-    def sigma_c_2(zs):
-        return cosmo.eval_sigma_crit(zl, zs)**2.
-    def Chang(z): #Chang distribution of source redshift
-        a = 1.24
-        b = 1.01
-        z_0 = 0.51
-        return np.exp(-(z/z_0)**b)*z**a
-    norm = quad(Chang,0,np.inf)[0]
-    def __INTEGRAND__(z): return Chang(z)*sigma_c_2(z)
-    return quad(__INTEGRAND__,zl + 0.1,100)[0]/norm
-
-def shape_noise_ds(profile = 1,z_name = 'z_mean',r_corner=None, shapenoise=.1, ns_arcmin2=None, cosmo=None):
-    
-    #def ns_arcmin2(z):
-    #    dy = 35-10
-    #    dx=0.9-0.3
-    #    return (z-0.3) * dy/dx + 35
-    res=[]
-    for p in profile:
-        dS_arcmin2 = 3437.75**2*np.pi*np.array([r_corner[i+1]**2 - r_corner[i]**2 for i in range(len(r_corner)-1)])/(cosmo.eval_da(p[z_name])**2)
-        Ngal = dS_arcmin2*ns_arcmin2#ns_arcmin2(p['z_mean'])*dS_arcmin2
-        av_s_2 = av_sigma_2(p[z_name], cosmo=cosmo)
-        res.append(av_s_2*shapenoise**2/(Ngal*p['n_stack']))
-    return np.array(res)
-
     
 
 def bootstrap_covariance(profile = 1,
@@ -190,9 +163,9 @@ def bootstrap_covariance(profile = 1,
     colname = ['z_mean','obs_mean','obs_rms', 'cov_t','inv_cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err', 'gt_random']
     data = {name : [] for name in colname}
     for z_bin in Z_bin:
-        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
+        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] >= z_bin[0])
         for obs_bin in Obs_bin:
-            condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
+            condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] >= obs_bin[0])
             if condition.shape == (len(profile), 1):
                 condition = [c[0] for c in condition]
             p = profile[condition]
@@ -201,7 +174,7 @@ def bootstrap_covariance(profile = 1,
             z_mean = np.mean(p[z_name])
             n_cluster=len(p)
             gt, gx = [], []
-            n_boot_used = int(n_boot)#*( 1 + 1000/n_cluster ))
+            n_boot_used = int(n_boot)
             for n in range(n_boot_used):
                 p_boot = p[np.random.choice(np.arange(n_cluster), n_cluster)]
                 gt_boot, gx_boot, r_boot = mean_value(profile = p_boot, 
@@ -229,63 +202,39 @@ def jacknife_covariance(profile = 1,
                     gt_out = '1', gx_out = '1',
                     weight = '1',
                     z_name = '1', obs_name = '1',
-                    n_jack = 1,
+                    n_side = 32,
                     ra = 'ra', dec = 'dec',
                     Z_bin = 1, Obs_bin = 1):
-    
-    n_jack_ra = round(np.sqrt(n_jack))
-    n_jack_dec = n_jack_ra
-    ra_max, ra_min = np.max(profile[ra]), np.min(profile[ra])
-    dec_max, dec_min = np.max(profile[dec]), np.min(profile[dec])
-    ra_corner = np.linspace(ra_min, ra_max, n_jack_ra + 1)
-    dec_corner = np.linspace(dec_min, dec_max, n_jack_dec + 1)
-    Ra_bin  = binning(ra_corner)
-    Dec_bin  = binning(dec_corner)
-    colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err', 'Hartlap']
+    colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err']
     data = {name : [] for name in colname}
+    healpix_clusters = healpy.ang2pix(n_side, profile[ra], profile[dec], nest=False, lonlat=True)
+    healpix_list = np.unique(healpix_clusters)
+    n_jack = len(healpix_list)
     for z_bin in Z_bin:
-        
-        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
-        
-        for obs_bin in Obs_bin:
-            
-            condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
-            
-            condition = [c[0] for c in condition]
-            
-            p = profile[condition]
-            
-            if len(p) == 0: continue
-                
-            obs_mean, obs_rms = np.mean(p[obs_name]), np.std(p[obs_name])
-            z_mean = np.mean(p[z_name])
-            gt_JK, gx_JK = [], []
-
-            for ra_bin in Ra_bin:
-                
-                for dec_bin in Dec_bin:
-                    mask_jacknife = (p[ra] > ra_bin[0])*(p[ra] < ra_bin[1])*(p[dec] > dec_bin[0])*(p[dec] < dec_bin[1])
-                    profile_jacknife = p[np.invert(mask_jacknife)]
-                    gt_jk, gx_jk, r_jk = mean_value(profile = profile_jacknife, 
-                                           r_in = r_in,
-                                           gt_in = gt_in, 
-                                           gx_in = gx_in,
-                                           r_out = r_out,
-                                           gt_out = gt_out,
-                                           gx_out = gx_out,
-                                           weight = weight)
+            mask_z = (profile[z_name] < z_bin[1])*(profile[z_name] >= z_bin[0])
+            for obs_bin in Obs_bin:
+                mask_tot = mask_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] >= obs_bin[0])
+                obs_mean, obs_rms = np.mean(profile[mask_tot][obs_name]), np.std(profile[mask_tot][obs_name])
+                z_mean = np.mean(profile[mask_tot][z_name])
+                gt_JK, gx_JK = [], []
+                for k, h_remove in enumerate(healpix_list):
+                    mask_keep = np.invert(np.isin(healpix_clusters,h_remove))
+                    profile_k = profile[mask_tot*mask_keep]
+                    gt_jk, gx_jk, r_jk = mean_value(profile = profile_k, 
+                                           r_in = r_in, gt_in = gt_in, 
+                                           gx_in = gx_in, r_out = r_out,
+                                           gt_out = gt_out, gx_out = gx_out, weight = weight)
                     gt_JK.append(np.array(gt_jk))
                     gx_JK.append(np.array(gx_jk))
-            gt, gx = np.array(gt_JK), np.array(gx_JK)
-            Xt, Xx = np.stack((gt.astype(float)), axis = 1), np.stack((gx.astype(float)), axis = 1)
-            cov_t, cov_x = np.cov(Xt, bias = False), np.cov(Xx, bias = False)
-            cov_t, cov_x = ((n_jack-1)**2/n_jack)*cov_t, ((n_jack-1)**2/n_jack)*cov_x
-            H = (n_jack - cov_t.shape[0] - 2)/(n_jack - 1)
-            array = [z_mean, obs_mean, obs_rms, cov_t, 
-                     cov_x, gt, gx, np.sqrt(cov_t.diagonal()), np.sqrt(cov_x.diagonal()), H]
-            
-            for i, name in enumerate(colname):
-                data[name].append(array[i])
+                gt, gx = np.array(gt_JK), np.array(gx_JK)
+                Xt, Xx = np.stack((gt.astype(float)), axis = 1), np.stack((gx.astype(float)), axis = 1)
+                cov_t, cov_x = np.cov(Xt, bias = False), np.cov(Xx, bias = False)
+                cov_t, cov_x = ((n_jack-1)**2/n_jack)*cov_t, ((n_jack-1)**2/n_jack)*cov_x
+                H = (n_jack - cov_t.shape[0] - 2)/(n_jack - 1)
+                array = [z_mean, obs_mean, obs_rms, cov_t, 
+                         cov_x, gt, gx, np.sqrt(cov_t.diagonal()), np.sqrt(cov_x.diagonal()), H]
+                for i, name in enumerate(colname):
+                    data[name].append(array[i])
                  
     data = Table(data)
     
@@ -300,57 +249,173 @@ def sample_covariance(profile = 1,
                     z_name = '1', obs_name = '1',
                     Z_bin = 1, Obs_bin = 1):
 
-    colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err']
-    
+    colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_s', 'gx_s', 'gt_err', 'gx_err']
     data = {name : [] for name in colname}
-    
     for z_bin in Z_bin:
-        
-        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
-        
-        for obs_bin in Obs_bin:
-            
-            condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
-            
-            condition = [c[0] for c in condition]
-            
-            p = profile[condition]
-            
-            if len(p) == 0: continue
+            mask_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
+            for obs_bin in Obs_bin:
+                mask_tot = mask_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
+                obs_mean, obs_rms = np.mean(profile[mask_tot][obs_name]), np.std(profile[mask_tot][obs_name])
+                z_mean = np.mean(profile[mask_tot][z_name])
+                prf = profile[mask_tot]
+                cov_t, cov_x = np.cov(prf[gt_in].T)/(len(prf)), np.cov(prf[gx_in].T)/(len(prf))
+                array = [z_mean, obs_mean, obs_rms, cov_t,cov_x, 1, 1, 1,1]
+                for i, name in enumerate(colname):
+                    data[name].append(array[i])
+                 
+    data = Table(data)
                 
-            obs_mean, obs_rms = np.mean(p[obs_name]), np.std(p[obs_name])
-            z_mean = np.mean(p[z_name])
-            gt_individual, gx_individual, w_unit = [], [], []
-            
-            for i, p_individual in enumerate(p):
-                
-                gt_individual.append(np.array(p_individual[gt_in]))
-                gx_individual.append(np.array(p_individual[gx_in]))
-                w_unit.append(np.array([1 if w_ > 0 else 0 for w_ in p_individual[weight]]))
-                
-            p['w_unit'] = np.array(w_unit)
-                
-            gt_mean = np.sum(p[gt_in]*p['w_unit'], axis = 0)/np.sum(p['w_unit'], axis = 0)
-            
-            cov_diag_sample = np.sum((p[gt_in] - gt_mean)**2*p['w_unit'], axis = 0)/(np.sum(p['w_unit'], axis = 0) - 1)
-            
-            cov_diag_mean = cov_diag_sample/len(p)
-            
-            cov_t = np.zeros([len(cov_diag_mean),len(cov_diag_mean)])
-            cov_x = np.zeros([len(cov_diag_mean),len(cov_diag_mean)])
-            for i in range(len(cov_diag_mean)):
-                cov_t[i,i] = cov_diag_mean[i]
+    return data
 
+#def av_sigma_2(zl, cosmo=None):
+#    def sigma_c_2(zs):
+#        return cosmo.eval_sigma_crit(zl, zs)**2.
+#    def Chang(z): #Chang distribution of source redshift
+#        a = 1.24
+##        b = 1.01
+#        z_0 = 0.51
+#        return np.exp(-(z/z_0)**b)*z**a
+#    norm = quad(Chang,0,np.inf)[0]
+#    def __INTEGRAND__(z): return Chang(z)*sigma_c_2(z)
+#    return quad(__INTEGRAND__,zl + 0.1,100)[0]/norm
+
+#def shape_noise_ds(profile = 1,z_name = 'z_mean',r_corner=None, shapenoise=.1, ns_arcmin2=None, cosmo=None):
+    
+    #def ns_arcmin2(z):
+    #    dy = 35-10
+    #    dx=0.9-0.3
+    #    return (z-0.3) * dy/dx + 35
+#    res=[]
+#    for p in profile:
+#        dS_arcmin2 = 3437.75**2*np.pi*np.array([r_corner[i+1]**2 - r_corner[i]**2 for i in #range(len(r_corner)-1)])/(cosmo.eval_da(p[z_name])**2)
+#        Ngal = dS_arcmin2*ns_arcmin2#ns_arcmin2(p['z_mean'])*dS_arcmin2
+#        av_s_2 = av_sigma_2(p[z_name], cosmo=cosmo)
+#        res.append(av_s_2*shapenoise**2/(Ngal*p['n_stack']))
+#    return np.array(res)
+
+#def sample_covariance_old(profile = 1,
+#                    r_in = '1',
+#                    gt_in = '1', gx_in = '1',
+#                    r_out = '1',
+#                    gt_out = '1', gx_out = '1',
+#                    weight = '1',
+#                    z_name = '1', obs_name = '1',
+#                    Z_bin = 1, Obs_bin = 1):
+
+#    colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err']
+#    data = {name : [] for name in colname}
+#    for z_bin in Z_bin:
+#        condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
+#        for obs_bin in Obs_bin:
+#            condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
+#            
+#            condition = [c[0] for c in condition]
+#            
+#            p = profile[condition]
+            
+#            if len(p) == 0: continue
+#            obs_mean, obs_rms = np.mean(p[obs_name]), np.std(p[obs_name])
+##            z_mean = np.mean(p[z_name])
+#            gt_individual, gx_individual, w_unit = [], [], []
+#            
+#            for i, p_individual in enumerate(p):
+#v                
+#                gt_individual.append(np.array(p_individual[gt_in]))
+#                gx_individual.append(np.array(p_individual[gx_in]))
+#                w_unit.append(np.array([1 if w_ > 0 else 0 for w_ in p_individual[weight]]))
+                
+#            p['w_unit'] = np.array(w_unit)
+#                
+#            gt_mean = np.sum(p[gt_in]*p['w_unit'], axis = 0)/np.sum(p['w_unit'], axis = 0)
+            
+#            cov_diag_sample = np.sum((p[gt_in] - gt_mean)**2*p['w_unit'], axis = 0)/(np.sum(p['w_unit'], axis = 0) - 1)
+            
+#            cov_diag_mean = cov_diag_sample/len(p)
+            
+#            cov_t = np.zeros([len(cov_diag_mean),len(cov_diag_mean)])
+#            cov_x = np.zeros([len(cov_diag_mean),len(cov_diag_mean)])
+#            for i in range(len(cov_diag_mean)):
+#                cov_t[i,i] = cov_diag_mean[i]
+#
             #gt, gx, w = np.array(gt_individual), np.array(gx_individual), np.array(weights_individual)
             #Xt, Xx = np.stack((gt.astype(float)), axis = 1), np.stack((gx.astype(float)), axis = 1)
             #cov_t, cov_x = np.cov(Xt, aweights =  None)/len(p), np.cov(Xx)/len(p)
             
-            array = [z_mean, obs_mean, obs_rms, cov_t, cov_diag_mean, 1, 1, cov_diag_sample, cov_diag_sample]
-            
-            for i, name in enumerate(colname):
-                data[name].append(array[i])
-                 
-    data = Table(data)
+#            array = [z_mean, obs_mean, obs_rms, cov_t, cov_diag_mean, 1, 1, cov_diag_sample, cov_diag_sample]
+#            
+#            for i, name in enumerate(colname):
+#                data[name].append(array[i])
+#                 
+#    data = Table(data)
     
-    return data
+#    return data
 
+
+#def jacknife_covariance_old(profile = 1,
+#                    r_in = '1',
+#                    gt_in = '1', gx_in = '1',
+#                    r_out = '1',
+#                    gt_out = '1', gx_out = '1',
+#                    weight = '1',
+#                    z_name = '1', obs_name = '1',
+#                    n_jack = 1,
+#                    ra = 'ra', dec = 'dec',
+#                    Z_bin = 1, Obs_bin = 1):
+#    
+#    n_jack_ra = round(np.sqrt(n_jack))
+#    n_jack_dec = n_jack_ra
+#    ra_max, ra_min = np.max(profile[ra]), np.min(profile[ra])
+#    dec_max, dec_min = np.max(profile[dec]), np.min(profile[dec])
+#    ra_corner = np.linspace(ra_min, ra_max, n_jack_ra + 1)
+#    dec_corner = np.linspace(dec_min, dec_max, n_jack_dec + 1)
+#    Ra_bin  = binning(ra_corner)
+ #   Dec_bin  = binning(dec_corner)
+ #   colname = ['z_mean','obs_mean','obs_rms', 'cov_t', 'cov_x', 'gt_boot', 'gx_boot', 'gt_err', 'gx_err', 'Hartlap']
+ #   data = {name : [] for name in colname}
+ #   for z_bin in Z_bin:
+        
+ #       condition_z = (profile[z_name] < z_bin[1])*(profile[z_name] > z_bin[0])
+        
+ #       for obs_bin in Obs_bin:
+            
+ #           condition = condition_z*(profile[obs_name] < obs_bin[1])*(profile[obs_name] > obs_bin[0])
+            
+ #           condition = [c[0] for c in condition]
+            
+#            p = profile[condition]
+            
+#            if len(p) == 0: continue
+                
+#            obs_mean, obs_rms = np.mean(p[obs_name]), np.std(p[obs_name])
+#            z_mean = np.mean(p[z_name])
+#            gt_JK, gx_JK = [], []
+#
+#            for ra_bin in Ra_bin:
+                
+#                for dec_bin in Dec_bin:
+#                    mask_jacknife = (p[ra] > ra_bin[0])*(p[ra] < ra_bin[1])*(p[dec] > dec_bin[0])*(p[dec] < dec_bin[1])
+#                    profile_jacknife = p[np.invert(mask_jacknife)]
+#                    gt_jk, gx_jk, r_jk = mean_value(profile = profile_jacknife, 
+#                                           r_in = r_in,
+#                                           gt_in = gt_in, 
+#                                           gx_in = gx_in,
+#                                           r_out = r_out,
+#                                           gt_out = gt_out,
+#                                           gx_out = gx_out,
+ #                                          weight = weight)
+#                    gt_JK.append(np.array(gt_jk))
+#                    gx_JK.append(np.array(gx_jk))
+#            gt, gx = np.array(gt_JK), np.array(gx_JK)
+#            Xt, Xx = np.stack((gt.astype(float)), axis = 1), np.stack((gx.astype(float)), axis = 1)
+#            cov_t, cov_x = np.cov(Xt, bias = False), np.cov(Xx, bias = False)
+#            cov_t, cov_x = ((n_jack-1)**2/n_jack)*cov_t, ((n_jack-1)**2/n_jack)*cov_x
+#            H = (n_jack - cov_t.shape[0] - 2)/(n_jack - 1)
+#            array = [z_mean, obs_mean, obs_rms, cov_t, 
+#                     cov_x, gt, gx, np.sqrt(cov_t.diagonal()), np.sqrt(cov_x.diagonal()), H]
+            
+#            for i, name in enumerate(colname):
+#                data[name].append(array[i])
+                 
+#    data = Table(data)
+    
+#    return data

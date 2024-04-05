@@ -256,6 +256,136 @@ def Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None):
             dNdOmega[i,j] = integral
     return dNdOmega
 
+def Cluster_bias_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None, cM='Diemer15', cosmo = None):
+    
+
+        
+    richness_grid, logm_grid, z_grid = grids['richness_grid'], grids['logm_grid'], grids['z_grid']
+    z_bins, richness_bins = bins['redshift_bins'], bins['richness_bins']
+    
+    concentration_grid = np.zeros([len(logm_grid), len(z_grid)])
+    deff = ccl.halos.massdef.MassDef(200, 'critical')
+    if cM == 'Diemer15':
+        conc = ccl.halos.concentration.ConcentrationDiemer15(mass_def=deff)
+    if cM == 'Duffy08':
+        conc = ccl.halos.concentration.ConcentrationDuffy08(mass_def=deff)
+    if cM == 'Prada12':
+        conc = ccl.halos.concentration.ConcentrationPrada12(mass_def=deff)
+    if cM == 'Bhattacharya13':
+        conc = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
+    
+    for i, z in enumerate(z_grid):
+        lnc = np.log(conc._concentration(cosmo, 10**logm_grid, 1./(1. + z))) 
+        concentration_grid[:,i] = np.exp(lnc)  
+        
+    definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
+    halobias_200m_fct = ccl.halos.hbias.tinker10.HaloBiasTinker10(mass_def='200m', mass_def_strict=True)
+    m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc)
+    halo_bias_200m = np.zeros([len(logm_grid), len(z_grid)])
+
+    for i, z in enumerate(z_grid):
+        logm_grid_200m = np.log10(m200c_to_m200m(cosmo, 10**logm_grid, 1/(1+z)))
+        halo_bias_200m[:,i] = halobias_200m_fct(cosmo, 10**logm_grid_200m, 1/(1+z))
+    
+    bias_dNdOmega = np.zeros([len(richness_bins), len(z_bins)])
+    for i, richness_bin in enumerate(richness_bins):
+        #resize richness-axis
+        index_richness_grid_cut, richness_grid_cut = reshape_axis(richness_grid, richness_bin)
+        for j, z_bin in enumerate(z_bins):
+            #resize redshift-axis
+            index_z_grid_cut, z_grid_cut = reshape_axis(z_grid, z_bin)
+            integrand_cut = reshape_integrand(integrand_count, index_richness_grid_cut, index_z_grid_cut)
+            halo_bias_200m_cut = halo_bias_200m[:,index_z_grid_cut]
+            integral = simps(simps(simps(integrand_cut, 
+                                         richness_grid_cut, axis=0) * halo_bias_200m_cut, 
+                                         logm_grid, axis=0), 
+                                         z_grid_cut, axis=0)
+            bias_dNdOmega[i,j] = integral
+    return bias_dNdOmega
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # def Cluster_Abundance_MZ(z_bins, logm_bins, dNdzdlogMdOmega, completeness,
 #                              logm_grid, z_grid, add_completeness): 
 #     r"""
