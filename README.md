@@ -69,12 +69,5 @@ $$
 
 # Estimation of stacked excess surface mass density profiles arround redMaPPer clusters
 - `_config_lensing_profiles.py`: configuration file for estimation of lensing profiles
-- `_utils_lensing_profiles.py`: set of functions for computing lensing profiles
-- `run_lensing_profiles.py` : compute individual lensing profiles 
-The stacked lensing profiles are estimates via
-
-$$
-\widehat{\Delta\Sigma}_+(R) = \frac{1}{\sum_{l= 1}^{N_{l}}\sum_{s= 1}^{N_{ls}}w_{ls}}
-     \sum_{l= 1}^{N_{l}}\sum_{s= 1}^{N_{ls}}w_{ls}\widehat{\Sigma_{{\rm crit}}}(z_s, z_l)\epsilon_+^{l,s}
-$$
-
+- `_utils_lensing_profiles.py`: set of functions for computing individual lensing profiles with the DESC [Cluster Lensing Mass Modeling (CLMM)](https://github.com/LSSTDESC/CLMM) code. This module is called at the level of the extraction of source sample catalog (above), to compute directy the individual lensing profiles. 
+- `compute_stacked_lensing_profiles.py` : compute stacked lensing profiles in bins of redshift and richness.
