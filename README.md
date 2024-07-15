@@ -10,7 +10,7 @@ In the /modeling directory
 - `CL_COUNT_cluster_abundance`: provides prediction for cluster abundance in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
 
 $
-N_{ij}=  \Omega \int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda\int_{m_{\rm min}}^{+\infty}dm\ \frac{dn(m, z)}{dm}\frac{d^2V(z)}{dzd\Omega} \Phi(\lambda, m, z) P(\lambda|m,z)
+N_{ij}=  \Omega \int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{dn(m, z)}{dm}\frac{d^2V(z)}{dzd\Omega} \Phi(\lambda, m, z) P(\lambda|m,z)
 $
 
 - `CL_LENSING_cluster_lensing`: provides prediction for cluster lensing signal in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
