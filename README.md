@@ -20,6 +20,11 @@ $$
 $$
 
 - `CL_MASS_cluster_lensing`: provides prediction for cluster mean mass in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
+
+$$
+M_{ij} = \frac{1}{N_{ij}}\int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{d^2N(m, z)}{dzdm} c(m,z) P(\lambda|m,z)m.
+$$
+
 - `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
 - `CL_COUNT_modeling_purity`: modeling purity.
 - `CL_COUNT_modeling_completeness`: modeling completeness.
