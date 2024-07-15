@@ -8,7 +8,7 @@ Cluster cosmology analysis using DESC tools and simulations. This repository pre
 In the /modeling directory
 ## Modeling cluster abundance and cluster lensing
 
-- `CL_COUNT_modeling_halo_mass_function`: modeling of cosmological functions, i.e. the halo mass function, halo bias and comoving volume. We use the Core Cosmology Library ([CCL](https://ccl.readthedocs.io/en/latest/) by [Chisari et al. (2019)](https://arxiv.org/abs/1812.05995)).
+- `CL_COUNT_modeling_halo_mass_function`: modeling of cosmological functions, i.e. the halo mass function, halo bias and comoving volume. We use the [Core Cosmology Library](https://ccl.readthedocs.io/en/latest/) by [Chisari et al. (2019)](https://arxiv.org/abs/1812.05995).
 
 - `CL_COUNT_cluster_abundance`: provides prediction for cluster abundance in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation. The count in the $i$-th redshift bin and in the $j$-th richness bin is given by
 
@@ -42,8 +42,19 @@ P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left(-\frac{[\ln\lambda - \langle \
 $$
 
 ## Bayesian inference pipeline
-- `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology.
-- `CL_COUNT_DATAOPS_cluster_abundance_covariance`: provides estimator of cluster abundance covariance based on data (still under construction).
+In this work we aim at infering the parameters of the DC2 redMaPPer mass-richness relation by drawing the posterior distribution
+
+$$
+\mathcal{P}(\theta|\mathrm{data}) = \frac{\mathcal{L}(\mathrm{data}|\theta)|\pi(\theta)}{\mathcal{L}(\mathrm{data})}
+$$
+
+- `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology. We use the count likelihood
+
+$$
+\mathcal{L}_{\rm N} \propto |\Sigma_{\rm N}|^{-1}\exp \left[ -\frac{1}{2}[N-\widehat{N}]^T\Sigma^{-1}_{\rm N}[N-\widehat{N}] \right]
+$$
+
+and we use a Gaussian likelihood for either the stacked lensing profiles of stacked lensign masses.
 - `STAT_forecast`: module for Fisher forecast.
 
 # Data extraction and lensing signal estimation
