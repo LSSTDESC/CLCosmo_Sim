@@ -14,9 +14,11 @@ N_{ij}=  \Omega \int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\l
 $$
 
 - `CL_LENSING_cluster_lensing`: provides prediction for cluster lensing signal in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation. The model is given by
+
 $$
-\Delta\Sigma_{ij} = \frac{1}{N_{ij}}\int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{d^2N(m, z)}{dzdm} c(m,z) P(\lambda|m,z)\Delta\Sigma(R|m,z)
+\Delta\Sigma_{ij}(R) = \frac{1}{N_{ij}}\int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{d^2N(m, z)}{dzdm} c(m,z) P(\lambda|m,z)\Delta\Sigma(R|m,z)
 $$
+
 - `CL_MASS_cluster_lensing`: provides prediction for cluster mean mass in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
 - `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
 - `CL_COUNT_modeling_purity`: modeling purity.
