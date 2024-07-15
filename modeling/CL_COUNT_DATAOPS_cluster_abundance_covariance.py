@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import combinations, chain
 import healpy
+import PySSC
 
 def binning(corner): return [[corner[i],corner[i+1]] for i in range(len(corner)-1)]
 
@@ -14,6 +15,62 @@ class Covariance_matrix():
     def __init__(self):
         self.name = 'name'
         return None
+    
+    def compute_theoretical_Sij(self, Z_bin, cosmo, f_sky):
+        default_cosmo_params = {'omega_b':cosmo['Omega_b']*cosmo['h']**2, 
+                                'omega_cdm':cosmo['Omega_c']*cosmo['h']**2, 
+                                'H0':cosmo['h']*100, 
+                                'n_s':cosmo['n_s'], 
+                                'sigma8': cosmo['sigma8'],
+                                'output' : 'mPk'}
+        z_arr = np.linspace(0.2,1.,1000)
+        nbins_T   = len(Z_bin)
+        windows_T = np.zeros((nbins_T,len(z_arr)))
+        for i, z_bin in enumerate(Z_bin):
+            Dz = z_bin[1]-z_bin[0]
+            z_arr_cut = z_arr[(z_arr > z_bin[0])*(z_arr < z_bin[1])]
+            for k, z in enumerate(z_arr):
+                if ((z>z_bin[0]) and (z<=z_bin[1])):
+                    windows_T[i,k] = 1  
+        Sij_fullsky = PySSC.Sij_alt_fullsky(z_arr, windows_T, order=1, cosmo_params=default_cosmo_params, cosmo_Class=None, convention=0)
+        Sij_partialsky = Sij_fullsky/f_sky
+        return Sij_partialsky 
+    
+    def sample_covariance_full_sky(self, Z_bin, Proxy_bin, NBinned_halo_bias, Sij):
+        r"""
+        returns the sample covariance matrix for cluster count
+        Attributes:
+        -----------
+         Redshift_bin : list of lists
+            list of redshift bins
+        Proxy_bin : list of lists
+            list of mass bins
+        Binned_Abundance: array
+            predicted abundance
+        Binned_halo_bias: array
+            predicted binned halo bias
+            Sij: array
+        matter fluctuation amplitude per redshift bin
+        Returns:
+        --------
+        sample_covariance: array
+            sample covariance for cluster abundance
+            #uses the calculation of the fluctuation apmplitude Sij
+        """
+        index_LogM, index_Z =  np.meshgrid(np.arange(len(Proxy_bin)), np.arange(len(Z_bin)))
+        index_Z_flatten = index_Z.flatten()
+        len_mat = len(Z_bin) * len(Proxy_bin)
+        cov_SSC = np.zeros([len_mat, len_mat])
+        Nb = NBinned_halo_bias#np.multiply(Binned_Abundance, Binned_halo_bias)
+        Nbij = np.tensordot(Nb, Nb)
+        for i, Nbi in enumerate(Nb.flatten()):
+           # if i%100==0: print(i)
+            for j, Nbj in enumerate(Nb.flatten()):
+                if i >= j:
+                    index_z_i, index_z_j = index_Z_flatten.flatten()[i], index_Z_flatten.flatten()[j]
+                    cov_SSC[i,j] = Nbi * Nbj * Sij[index_z_i, index_z_j]
+                    cov_SSC[j,i] = cov_SSC[i,j]
+        return cov_SSC
 
     def compute_boostrap_covariance(self, catalog = None, 
                                     proxy_colname = 'mass', redshift_colname = 'redshift', 
