@@ -60,7 +60,7 @@ def compute_cluster_lensing(R, cM, logm_grid, z_grid, cosmo_ccl, cosmo_clmm,
                                         cosmo=cosmo_clmm, massdef='critical', delta_mdef=200)
             rs_grid[:,i] = r200c / concentration_grid[:,i]
             for j, logm in enumerate(logm_grid):
-                boost_factor_grid[:,j,i] = u.compute_powerlaw_boost(R, rscale=rs_grid[j,i], boost0=0.1, alpha=-1.0)
+                boost_factor_grid[:,j,i] = u.compute_nfw_boost(R, rscale=rs_grid[j,i], boost0=.1)
     
     cluster_lensing_grid = np.zeros([ len(R), len(logm_grid), len(z_grid)])
     for i in range(len(logm_grid)):
