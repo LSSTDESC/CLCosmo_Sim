@@ -63,7 +63,7 @@ The python files in this directory are dedicated to the background source extrac
 - `run_extract_sources_in_cosmoDC2.py` : module to extract background galaxy catalogs for each redMaPPer cluster, with photozs, each one saved in a pickle file. Individual catalogs can also not be saved, and lensing profiles directly computed. The source selection is
 
 $$
-\langle z\rangle_s > z_l + 0.2\ \mathrm{and}\ P(z_s > z_l) = \int_{z_{\rm cl}}^{\rm +\infty} dz_{\rm gal}p_{\rm photoz}(z_{\rm gal})> 0.8
+\langle z\rangle_s > z_l + 0.2\hspace{0.5cm} \mathrm{and}\hspace{0.5cm} P(z_s > z_l) = \int_{z_{\rm cl}}^{\rm +\infty} dz_{\rm gal}p_{\rm photoz}(z_{\rm gal})> 0.8
 $$
 
 
@@ -74,7 +74,7 @@ $$
 The stacked lensing profiles are estimates via
 
 $$
-\widehat{\Delta\Sigma}_+(R) = \frac{1}{\sum\limits_{l= 1}^{N_{l}}\sum\limits_{s= 1}^{N_{ls}}w_{ls}}
-     \sum\limits_{l= 1}^{N_{l}}\sum\limits_{s= 1}^{N_{ls}}w_{ls}\widehat{\Sigma_{{\rm crit}}}(z_s, z_l)\epsilon_+^{l,s}
+\widehat{\Delta\Sigma}_+(R) = \frac{1}{\sum_{l= 1}^{N_{l}}\sum_{s= 1}^{N_{ls}}w_{ls}}
+     \sum_{l= 1}^{N_{l}}\sum_{s= 1}^{N_{ls}}w_{ls}\widehat{\Sigma_{{\rm crit}}}(z_s, z_l)\epsilon_+^{l,s}
 $$
 
