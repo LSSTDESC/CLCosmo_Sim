@@ -26,7 +26,7 @@ $$
 - `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function). We consider the log-normal model
 
 $$
-P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left\{-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{\sigma_{\ln\lambda|m,z}^2}\right\}
+P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left(-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{\sigma_{\ln\lambda|m,z}^2}\right)
 $$
 
 ## Bayesian inference pipeline
