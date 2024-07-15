@@ -10,7 +10,7 @@ analysis_1h_nfw = {'data_path': '../../data/stacked_esd_profiles_redmapper_true_
                                 'density_profile': 'nfw',
                                 'cM_relation': None,
                                 'two_halo': False,
-                                'radius_min': 1.5,
+                                'radius_min': 1.,
                                 'radius_max': 5.5,}
 
 #einasto

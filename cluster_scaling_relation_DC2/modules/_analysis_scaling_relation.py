@@ -15,7 +15,7 @@ analysis_Duffy08 = {
               'two_halo':False,
               'hmf':'Despali16',
               'radius_max':5.5,
-              'radius_min':1.5,
+              'radius_min':1.,
               'photoz':'Truez',
               'shear_richness_cov':False,
               'lensing_data':lensing_data_truez,
