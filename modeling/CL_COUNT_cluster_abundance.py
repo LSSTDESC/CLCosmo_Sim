@@ -41,6 +41,51 @@ def compute_dNdzdlogMdOmega_grid(logm_grid, z_grid, cosmo, hmd):
     for i, z in enumerate(z_grid):
         dNdzdlogMdOmega_grid[:,i] = hmf.dndlog10M(logm_grid ,z, cosmo, hmd) * hmf.dVdzdOmega(z, cosmo)
     return dNdzdlogMdOmega_grid
+
+def compute_halo_bias_grid(logm_grid, z_grid, cosmo, cM = 'Diemer15'):
+    r"""
+    Attributes:
+    -----------
+    logm_grid : array
+        log10M tabulated axis
+    z_grid : array
+        redshift tabulated axis
+    cosmo : CCL cosmology
+        cosmology
+    Returns:
+    --------
+    dN_dzdlogMdOmega : array
+        tabulated dzdlogMdOmega
+    """
+    concentration_grid = np.zeros([len(logm_grid), len(z_grid)])
+    halo_bias_200m = np.zeros([len(logm_grid), len(z_grid)])
+    deff = ccl.halos.massdef.MassDef(200, 'critical')
+    if cM == 'Diemer15':
+        conc = ccl.halos.concentration.ConcentrationDiemer15(mass_def=deff)
+    if cM == 'Duffy08':
+        conc = ccl.halos.concentration.ConcentrationDuffy08(mass_def=deff)
+    if cM == 'Prada12':
+        conc = ccl.halos.concentration.ConcentrationPrada12(mass_def=deff)
+    if cM == 'Bhattacharya13':
+        conc = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
+    
+    for i, z in enumerate(z_grid):
+        lnc = np.log(conc._concentration(cosmo, 10**logm_grid, 1./(1. + z))) 
+        concentration_grid[:,i] = np.exp(lnc)  
+        
+    definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
+    halobias_200m_fct = ccl.halos.hbias.tinker10.HaloBiasTinker10(mass_def='200m', mass_def_strict=True)
+    m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc)
+
+    for i, z in enumerate(z_grid):
+        logm_grid_200m = np.log10(m200c_to_m200m(cosmo, 10**logm_grid, 1/(1+z)))
+        halo_bias_200m[:,i] = halobias_200m_fct(cosmo, 10**logm_grid_200m, 1/(1+z))
+
+    return halo_bias_200m
+    
+    for i, z in enumerate(z_grid):
+        dNdzdlogMdOmega_grid[:,i] = hmf.dndlog10M(logm_grid ,z, cosmo, hmd) * hmf.dVdzdOmega(z, cosmo)
+    return dNdzdlogMdOmega_grid
     
 def compute_purity_grid(richness_grid, z_grid, theta_purity):
     r"""
@@ -169,6 +214,11 @@ def recompute_count_modelling(count_modelling, compute = None, grids = None, par
         for i in range(shape_integrand[0]):
             dNdzdlogMdOmega_new[i,:,:] = dNdzdlogMdOmega_
         count_modelling['dNdzdlogMdOmega'] = dNdzdlogMdOmega_new
+        
+    if compute['compute_halo_bias']:
+        count_modelling['halo_bias'] = compute_halo_bias_grid(grids['logm_grid'], grids['z_grid'], 
+                                                        params['CCL_cosmology'], cM = params['params_concentration_mass_relation'])
+        
     
     return count_modelling
 
@@ -256,37 +306,10 @@ def Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None):
             dNdOmega[i,j] = integral
     return dNdOmega
 
-def Cluster_bias_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None, cM='Diemer15', cosmo = None):
-    
+def Cluster_NHaloBias_ProxyZ(bins, integrand_count = None, halo_bias = None, grids = None, cosmo = None):
 
-        
     richness_grid, logm_grid, z_grid = grids['richness_grid'], grids['logm_grid'], grids['z_grid']
     z_bins, richness_bins = bins['redshift_bins'], bins['richness_bins']
-    
-    concentration_grid = np.zeros([len(logm_grid), len(z_grid)])
-    deff = ccl.halos.massdef.MassDef(200, 'critical')
-    if cM == 'Diemer15':
-        conc = ccl.halos.concentration.ConcentrationDiemer15(mass_def=deff)
-    if cM == 'Duffy08':
-        conc = ccl.halos.concentration.ConcentrationDuffy08(mass_def=deff)
-    if cM == 'Prada12':
-        conc = ccl.halos.concentration.ConcentrationPrada12(mass_def=deff)
-    if cM == 'Bhattacharya13':
-        conc = ccl.halos.concentration.ConcentrationBhattacharya13(mass_def=deff)
-    
-    for i, z in enumerate(z_grid):
-        lnc = np.log(conc._concentration(cosmo, 10**logm_grid, 1./(1. + z))) 
-        concentration_grid[:,i] = np.exp(lnc)  
-        
-    definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
-    halobias_200m_fct = ccl.halos.hbias.tinker10.HaloBiasTinker10(mass_def='200m', mass_def_strict=True)
-    m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc)
-    halo_bias_200m = np.zeros([len(logm_grid), len(z_grid)])
-
-    for i, z in enumerate(z_grid):
-        logm_grid_200m = np.log10(m200c_to_m200m(cosmo, 10**logm_grid, 1/(1+z)))
-        halo_bias_200m[:,i] = halobias_200m_fct(cosmo, 10**logm_grid_200m, 1/(1+z))
-    
     bias_dNdOmega = np.zeros([len(richness_bins), len(z_bins)])
     for i, richness_bin in enumerate(richness_bins):
         #resize richness-axis
@@ -295,9 +318,9 @@ def Cluster_bias_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = Non
             #resize redshift-axis
             index_z_grid_cut, z_grid_cut = reshape_axis(z_grid, z_bin)
             integrand_cut = reshape_integrand(integrand_count, index_richness_grid_cut, index_z_grid_cut)
-            halo_bias_200m_cut = halo_bias_200m[:,index_z_grid_cut]
+            halo_bias_cut = halo_bias[:,index_z_grid_cut]
             integral = simps(simps(simps(integrand_cut, 
-                                         richness_grid_cut, axis=0) * halo_bias_200m_cut, 
+                                         richness_grid_cut, axis=0) * halo_bias_cut, 
                                          logm_grid, axis=0), 
                                          z_grid_cut, axis=0)
             bias_dNdOmega[i,j] = integral
