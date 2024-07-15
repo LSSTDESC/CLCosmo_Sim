@@ -23,7 +23,11 @@ $$
 - `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
 - `CL_COUNT_modeling_purity`: modeling purity.
 - `CL_COUNT_modeling_completeness`: modeling completeness.
-- `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function).
+- `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function). We consider the log-normal model
+
+$$
+P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left\{-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{\sigma_{\ln\lambda|m,z}^2}\right\}
+$$
 
 ## Bayesian inference pipeline
 - `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology.
