@@ -51,16 +51,30 @@ $$
 - `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology. We use a Gaussian likelihood for either the cluster counts, the stacked lensing profiles of stacked lensign masses.
 - `STAT_forecast`: module for Fisher forecast.
 
-# Data extraction and lensing signal estimation
+# Data extraction
 in the /extract_data directory
 The python files in this directory are dedicated to the background source extraction from cosmoDC2 using GCRCatalogs and Qserv, as well as computing cluster lensing individual lensing profiles. 
+## Extraction of redMaPPer cluster catalog
+- `run_extract_cluster_catalog_redMaPPer.py`: extract catalog of redMaPPer clusters (position, richness, redshift), and their member galaxies (position, redshifts).
 ## cosmoDC2: Extraction of galaxy catalogs behind redMaPPer clusters
 - `_config_extract_sources_in_cosmoDC2.py`: configuration file for source extraction in cosmoDC2
 - `_utils_extract_sources_in_cosmoDC2.py` : functions to extract galaxy data using GCRcatalogs in the cosmoDC2 photoz-addons, and "truth" quantities using Qserv queries
 - `_utils_photometric_redshifts.py` : functions. From photometric probability density functions, compute mean redshift, mean critical surface mass density for each galaxy
-- `run_extract_sources_in_cosmoDC2.py` : module to extract background galaxy catalogs for each redMaPPer cluster, with photozs, each one saved in a pickle file. Individual catalogs can also not be saved, and lensing profiles directly computed. 
-## Estimate cluster lensing profiles from background source galaxies
+- `run_extract_sources_in_cosmoDC2.py` : module to extract background galaxy catalogs for each redMaPPer cluster, with photozs, each one saved in a pickle file. Individual catalogs can also not be saved, and lensing profiles directly computed. The source selection is
+
+$$
+\langle z\rangle_s > z_l + 0.2\ \mathrm{and}\ P(z_s > z_l) = \int_{z_{\rm cl}}^{\rm +\infty} dz_{\rm gal}p_{\rm photoz}(z_{\rm gal})> 0.8
+$$
+
+
+# Estimation of stacked excess surface mass density profiles arround redMaPPer clusters
 - `_config_lensing_profiles.py`: configuration file for estimation of lensing profiles
 - `_utils_lensing_profiles.py`: set of functions for computing lensing profiles
 - `run_lensing_profiles.py` : compute individual lensing profiles 
+The stacked lensing profiles are estimates via
+
+$$
+\widehat{\Delta\Sigma}_+(R) = \frac{1}{\sum\limits_{l= 1}^{N_{l}}\sum\limits_{s= 1}^{N_{ls}}w_{ls}}
+     \sum\limits_{l= 1}^{N_{l}}\sum\limits_{s= 1}^{N_{ls}}w_{ls}\widehat{\Sigma_{{\rm crit}}}(z_s, z_l)\epsilon_+^{l,s}
+$$
 
