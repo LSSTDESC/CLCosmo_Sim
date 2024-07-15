@@ -7,6 +7,9 @@ Cluster cosmology analysis using DESC tools and simulations. This repository pre
 # Modeling
 In the /modeling directory
 ## Modeling cluster abundance and cluster lensing
+
+- `CL_COUNT_modeling_halo_mass_function`: modeling of cosmological functions, i.e. the halo mass function, halo bias and comoving volume. We use the Core Cosmology Library ([CCL](https://ccl.readthedocs.io/en/latest/) by [Chisari et al. (2019)](https://arxiv.org/abs/1812.05995)).
+
 - `CL_COUNT_cluster_abundance`: provides prediction for cluster abundance in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation. The count in the $i$-th redshift bin and in the $j$-th richness bin is given by
 
 $$
@@ -31,7 +34,6 @@ $$
 M_{ij} = \frac{1}{N_{ij}}\int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{d^2N(m, z)}{dzdm} c(m,z) P(\lambda|m,z)m.
 $$
 
-- `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
 - `CL_COUNT_modeling_purity` and `CL_COUNT_modeling_completeness`: modeling purity and completeness, respectively. We consider the form proposed by [Aguena & Lima (2016)](https://arxiv.org/abs/1611.05468).
 - `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function). We consider the log-normal model
 
