@@ -8,9 +8,11 @@ Cluster cosmology analysis using DESC tools and simulations. This repository pre
 In the /modeling directory
 ## Modeling cluster abundance and cluster lensing
 - `CL_COUNT_cluster_abundance`: provides prediction for cluster abundance in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
-$$
+
+$
 N_{ij}=  \Omega \int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda\int_{m_{\rm min}}^{+\infty}dm\ \frac{dn(m, z)}{dm}\frac{d^2V(z)}{dzd\Omega} \Phi(\lambda, m, z) P(\lambda|m,z)
-$$
+$
+
 - `CL_LENSING_cluster_lensing`: provides prediction for cluster lensing signal in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
 - `CL_MASS_cluster_lensing`: provides prediction for cluster mean mass in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation.
 - `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
