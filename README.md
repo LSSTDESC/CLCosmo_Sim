@@ -13,6 +13,11 @@ $$
 N_{ij}=  \Omega \int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{j+1}} d\lambda \int_{m_{\rm min}}^{+\infty}dm \frac{dn(m, z)}{dm}\frac{d^2V(z)}{dzd\Omega} \Phi(\lambda, m, z) P(\lambda|m,z)
 $$
 
+- `CL_COUNT_DATAOPS_cluster_abundance_covariance`: provides prediction for cluster abundance covariance in the proxy-redshift space (binned). The covariance accounts for Poisson shot noise and Super-Sample Covariance (SSC). To compute SSC, we use [PySSC](https://pyssc.readthedocs.io/en/latest/) by [Lacasa et al. (2018)](https://www.aanda.org/articles/aa/full_html/2018/03/aa30281-16/aa30281-16.html).
+$$
+\Sigma_{\mathrm{N}}[ij,kl] = N_{ij}\delta^K_{ik}\delta^K_{jl}+ N_{ij}N_{kl}\langle b\rangle_{ij}\langle b\rangle_{kl} S_{jl}
+$$
+
 - `CL_LENSING_cluster_lensing`: provides prediction for cluster lensing signal in the proxy-redshift space (binned) with observable-mass relation, completeness and purity parametrisation. The model is given by
 
 $$
