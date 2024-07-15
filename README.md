@@ -48,13 +48,7 @@ $$
 \mathcal{P}(\theta|\mathrm{data}) = \frac{\mathcal{L}(\mathrm{data}|\theta)|\pi(\theta)}{\mathcal{L}(\mathrm{data})}
 $$
 
-- `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology. We use the count likelihood
-
-$$
-\mathcal{L}_{\rm N} = \mathrm{det}(\Sigma_{\rm N}^{-1})\exp \left( -\frac{1}{2}[N-\widehat{N}]^T\Sigma^{-1}_{\rm N}[N-\widehat{N}] \right)
-$$
-
-and we use a Gaussian likelihood for either the stacked lensing profiles of stacked lensign masses.
+- `CL_COUNT_class_likelihood`: provides binned Gaussian, Poissonian and unbinned Poissonian likelihoods for cluster count cosmology. We use a Gaussian likelihood for either the cluster counts, the stacked lensing profiles of stacked lensign masses.
 - `STAT_forecast`: module for Fisher forecast.
 
 # Data extraction and lensing signal estimation
