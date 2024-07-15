@@ -26,8 +26,7 @@ M_{ij} = \frac{1}{N_{ij}}\int_{z_{i}}^{z_{i+1}} dz \int_{\lambda_{j}}^{\lambda_{
 $$
 
 - `CL_COUNT_modeling_halo_mass_function`: modeling the halo mass function and cosmoving volume (CCL as backend).
-- `CL_COUNT_modeling_purity`: modeling purity.
-- `CL_COUNT_modeling_completeness`: modeling completeness.
+- `CL_COUNT_modeling_purity` and `CL_COUNT_modeling_completeness`: modeling purity and completeness, respectively. We consider the form proposed by [Aguena & Lima (2016)](https://arxiv.org/abs/1611.05468).
 - `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function). We consider the log-normal model
 
 $$
