@@ -22,6 +22,8 @@ import _read_covariance_shear_richness as GammaLambda_Cov
 
 sys.path.append('../../')
 import _redshift_richness_bins as analysis
+sys.path.append('../../lensing_profile_measurement/')
+import _config_lensing_profiles
 
 sys.path.append('../../modeling')
 import CL_COUNT_modeling_completeness as comp
@@ -44,13 +46,16 @@ z_corner = analysis.z_corner
 Richness_bin = analysis.Obs_bin
 rich_corner = analysis.rich_corner
 bins = {'redshift_bins':Z_bin, 'richness_bins': Richness_bin}
-
+fit_cosmo_str = 'No' if not fit_cosmo else 'Yes'
+print('[analysis]: '+analysis_metadata['type'])
+fit_cosmo_str = 'No' if not fit_cosmo else 'Yes'
+print('[do we fit cosmo ?]: '+fit_cosmo_str)
 #############_Data_#############
 
 obs = _load_data.load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner)
 if analysis_metadata['type'] == 'N': N_obs = obs
 if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN': N_obs, log10Mass, log10Mass_err = obs
-if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN': N_obs, DS_obs, Err_obs=obs
+if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN': N_obs, DS_obs, Err_obs, mask_radius=obs
 
 ##############################################################################################################################
 ##############################################################################################################################
@@ -100,14 +105,23 @@ count_modelling_new = cl_count.recompute_count_modelling(count_modelling, grids 
 if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
     
     print('[load theory]: compute mass-redshift lensing mass-redshift profiles')
+    
+    rup = analysis_metadata['radius_max']
+    rlow = analysis_metadata['radius_min']
+    r_edges = _config_lensing_profiles.bin_edges
+    #linear
+    #r = np.array([(r_edges[i]+r_edges[i+1])/2 for i in range(len(r_edges)-1)])
+    #quadratic
+    r = np.array([(2/3)*(r_edges[i+1]**3-r_edges[i]**3)/(r_edges[i+1]**2-r_edges[i]**2) for i in range(len(r_edges)-1)])
+    #
     r_reshaped = r[(r > rlow)*(r < rup)]
     cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, analysis_metadata['cM_relation'],
                                                          logm_grid, z_grid, cosmo, cosmo_clmm,
                                                         two_halo = analysis_metadata['two_halo'])
     print('[load theory]: Selection bias: Shear-richness covariance (Ben Zhang)')
     cov, cov_err = GammaLambda_Cov.read_covariance(photoz = analysis_metadata['photoz'], radius = r)
-    cov_DS_selection_bias_obs_mask = cov[mask]
-    cov_err_DS_selection_bias_obs_mask = cov_err[mask]
+    cov_DS_selection_bias_obs_mask = cov[mask_radius]
+    cov_err_DS_selection_bias_obs_mask = cov_err[mask_radius]
     cov_DS_selection_bias_obs = cov_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
     cov_err_DS_selection_bias_obs = cov_err_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
     
@@ -126,32 +140,45 @@ if analysis_metadata['type'] == 'N' or analysis_metadata['type'] == 'WLxN' or an
     Sij_partialsky = CLCovar.compute_theoretical_Sij(Z_bin, cosmo, f_sky)
 
 ##############################################################################################################################
-    
-def lnL(theta):
-    if fit_cosmo == True:
-        proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Om, s8 = theta
-        if proxy_sigma0 < 0: return -np.inf
-        if Om > .5: return -np.inf
-        if Om < .1: return -np.inf
-        if s8 > 1: return -np.inf
-        if s8 < .5: return -np.inf
-    else: 
+
+def prior(theta):
+    if add_bias==False:
         proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m = theta
-        #mean parameter priors
-        if proxy_mu0 < 0: return -np.inf
-        #
-        if proxy_muz < -2: return -np.inf
-        if proxy_muz > 2: return -np.inf
-        #
-        if proxy_mulog10m < 0: return -np.inf
-        #dispersion parameter priors
-        if proxy_sigma0 < 0: return -np.inf
-        #
-        if proxy_sigmaz < -2: return -np.inf
-        if proxy_sigmaz > 2: return -np.inf
-        #
-        if proxy_sigmalog10m < -2: return -np.inf
-        if proxy_sigmalog10m > 2: return -np.inf
+    else:
+        proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b = theta
+        if b < -0.5: return -np.inf
+        if b > 0.5: return -np.inf
+    #mean parameter priors
+    if proxy_mu0 < 0: return -np.inf
+    #
+    if proxy_muz < -2: return -np.inf
+    if proxy_muz > 2: return -np.inf
+    #
+    if proxy_mulog10m < 0: return -np.inf
+    #dispersion parameter priors
+    if proxy_sigma0 < 0: return -np.inf
+    #
+    if proxy_sigmaz < -2: return -np.inf
+    if proxy_sigmaz > 2: return -np.inf
+    #
+    if proxy_sigmalog10m < -2: return -np.inf
+    if proxy_sigmalog10m > 2: return -np.inf
+    
+add_bias==False
+def lnL(theta):
+   # if fit_cosmo == True:
+   #     proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Om, s8 = theta
+   #     if proxy_sigma0 < 0: return -np.inf
+   #     if Om > .5: return -np.inf
+   #     if Om < .1: return -np.inf
+   #     if s8 > 1: return -np.inf
+    #    if s8 < .5: return -np.inf
+    if add_bias==False:
+        proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m = theta
+    else:
+        proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b = theta
+    
+    prior(theta)
     
     theta_rm_new = [log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
     
@@ -174,8 +201,10 @@ def lnL(theta):
                    'compute_purity':False,
                    'compute_halo_bias':False}
         
-    adds_N = {'add_purity':True, 'add_completeness':True}
-    adds_NDS = {'add_purity':False, 'add_completeness':True}
+    adds_N = {'add_purity':True, 
+              'add_completeness':True}
+    adds_NDS = {'add_purity':False, 
+                'add_completeness':True}
 
     count_modelling_new = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute_new, params = params_new)
     test_sign = count_modelling_new['richness_mass_relation - sigma'].flatten() < 0
@@ -224,12 +253,18 @@ def lnL(theta):
     if analysis_metadata['type'] == 'WLxN': return lnLCLWL + lnLCLCount
     if analysis_metadata['type'] == 'MxN': return lnLCLM + lnLCLCount
    
-if fit_cosmo == True:
-    initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Omega_m_true, sigma8_true]
-    ndim = 8
-else: 
+#if fit_cosmo == True:
+#    initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Omega_m_true, sigma8_true]
+#    ndim = 8
+if add_bias==False: 
     initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
-    ndim = 6
+    labels = [r'\ln \lambda_0', r'\mu_z', r'\mu_m', r'\sigma_{\ln \lambda, 0}', r'\sigma_z', r'\sigma_m']
+    ndim=6
+else: 
+    b=0
+    initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b]
+    labels = [r'\ln \lambda_0', r'\mu_z', r'\mu_m', r'\sigma_{\ln \lambda, 0}', r'\sigma_z', r'\sigma_m', 'b']
+    ndim=7
 t = time.time()
 print(lnL(initial))
 tf = time.time()
@@ -239,5 +274,5 @@ pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
 sampler = emcee.EnsembleSampler(nwalker, ndim, lnL)
 sampler.run_mcmc(pos, 200, progress=True);
 flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
-results={'flat_chains':flat_samples, 'analysis':analysis_metadata}
+results={'flat_chains':flat_samples, 'analysis':analysis_metadata, label_parameters:labels}
 #save_pickle(results, f'../chains/'+analysis_metadata['type']+'/'+analysis_metadata['name']+'.pkl')

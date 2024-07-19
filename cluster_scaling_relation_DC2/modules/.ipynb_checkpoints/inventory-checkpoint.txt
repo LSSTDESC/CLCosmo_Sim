@@ -1,0 +1,55 @@
+WL
+0: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Duffy08_photoz=Truez_hmf=Despali16
+1: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Despali16
+2: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Prada12_photoz=Truez_hmf=Despali16
+3: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Bhattacharya13_photoz=Truez_hmf=Despali16
+4: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15_+2-halo_photoz=Truez_hmf=Despali16
+5: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Bocquet16
+6: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15_photoz=BPZ_hmf=Despali16
+7: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15_photoz=flex_hmf=Despali16
+8: MCMC_fit_m-r_WL_1-halo=nfw+c-M=Diemer15+cov(g,richness)_photoz=Truez_hmf=Despali16
+
+WLxN
+0: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Duffy08_photoz=Truez_hmf=Despali16
+1: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Despali16
+2: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Prada12_photoz=Truez_hmf=Despali16
+3: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Bhattacharya13_photoz=Truez_hmf=Despali16
+4: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_+2-halo_photoz=Truez_hmf=Despali16
+5: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Bocquet16
+6: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_photoz=BPZ_hmf=Despali16
+7: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_photoz=flex_hmf=Despali16
+8: MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15+cov(g,richness)_photoz=Truez_hmf=Despali16
+
+M
+0: MCMC_fit_m-r_M_1-halo=nfw+c-M=Duffy08_photoz=Truez_hmf=Despali16
+1: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Despali16
+2: MCMC_fit_m-r_M_1-halo=nfw+c-M=Prada12_photoz=Truez_hmf=Despali16
+3: MCMC_fit_m-r_M_1-halo=nfw+c-M=Bhattacharya13_photoz=Truez_hmf=Despali16
+4: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15_+2-halo_photoz=Truez_hmf=Despali16
+5: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Bocquet16
+6: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15_photoz=BPZ_hmf=Despali16
+7: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15_photoz=flex_hmf=Despali16
+8: MCMC_fit_m-r_M_1-halo=nfw+c-M=Diemer15+cov(g,richness)_photoz=Truez_hmf=Despali16
+
+MxN
+0: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Duffy08_photoz=Truez_hmf=Despali16
+1: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Despali16
+2: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Prada12_photoz=Truez_hmf=Despali16
+3: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Bhattacharya13_photoz=Truez_hmf=Despali16
+4: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15_+2-halo_photoz=Truez_hmf=Despali16
+5: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15_photoz=Truez_hmf=Bocquet16
+6: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15_photoz=BPZ_hmf=Despali16
+7: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15_photoz=flex_hmf=Despali16
+8: MCMC_fit_m-r_MxN_1-halo=nfw+c-M=Diemer15+cov(g,richness)_photoz=Truez_hmf=Despali16
+
+N
+0: MCMC_fit_m-r_N__hmf=Despali16
+1: MCMC_fit_m-r_N__hmf=Despali16
+2: MCMC_fit_m-r_N__hmf=Despali16
+3: MCMC_fit_m-r_N__hmf=Despali16
+4: MCMC_fit_m-r_N__hmf=Despali16
+5: MCMC_fit_m-r_N__hmf=Bocquet16
+6: MCMC_fit_m-r_N__hmf=Despali16
+7: MCMC_fit_m-r_N__hmf=Despali16
+8: MCMC_fit_m-r_N__hmf=Despali16
+

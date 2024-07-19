@@ -1,0 +1,53 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Fri Jul 19 14:17:02 CEST 2024
+* Job name:             WLxN
+* Job id:               19043718
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0088
+* Operating System:     CentOS Linux release 7.9.2009 (Core)
+* Architecture:         x86_64
+**********************************************************************
+usage: run_mcmc_argparser.py [-h] [--type TYPE] [--fit_cosmo FIT_COSMO] [--hmf HMF] [--radius_max RADIUS_MAX] [--radius_min RADIUS_MIN] [--cM_relation CM_RELATION]
+                             [--two_halo TWO_HALO] [--photoz PHOTOZ] [--lensing_data LENSING_DATA] [--mass_file MASS_FILE]
+run_mcmc_argparser.py: error: unrecognized arguments: --density_profile nfw --shear_richness_cov False --name_plot nfw - Duffy08 --name MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Duffy08_rmin=1.0-rmax=5.5_photoz=Truez_hmf=Despali16
+cluster-masses_1-halo=nfw+c-M=Duffy08_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Prada12_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Bhattacharya13_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_+2-halo_rmin=1.0-rmax=15_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=BPZ
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=flex
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+srun: error: ccwslurm0088: task 0: Exited with exit code 2
+usage: run_mcmc_argparser.py [-h] [--type TYPE] [--fit_cosmo FIT_COSMO] [--hmf HMF] [--radius_max RADIUS_MAX] [--radius_min RADIUS_MIN] [--cM_relation CM_RELATION]
+                             [--two_halo TWO_HALO] [--photoz PHOTOZ] [--lensing_data LENSING_DATA] [--mass_file MASS_FILE]
+run_mcmc_argparser.py: error: unrecognized arguments: --density_profile nfw --shear_richness_cov False --name_plot nfw - Diemer15 --name MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez_hmf=Despali16
+cluster-masses_1-halo=nfw+c-M=Duffy08_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Prada12_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Bhattacharya13_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_+2-halo_rmin=1.0-rmax=15_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=BPZ
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=flex
+cluster-masses_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=5.5_photoz=Truez
+srun: error: ccwslurm0088: task 0: Exited with exit code 2
+****************************************************************
+*                      SLURM Batch System                      *
+*           IN2P3 Computing Centre, Villeurbanne FR            *
+****************************************************************
+Date: Fri Jul 19 14:17:21 CEST 2024
+Job informations can be found using these commands:
+Accounting:
+sacct -j 19043718
+Efficiency:
+seff 19043718
+****************************************************************

@@ -9,15 +9,15 @@ lensing_data_flex = '../../data/stacked_esd_profiles_redmapper_flex_full_coverag
 #impact_c_m
 analysis_Duffy08 = {
               'type': 'WLxN',
-              'fit_cosmo':False,
+              'fit_cosmo':'False',
               'density_profile':'nfw',
               'cM_relation':'Duffy08',
-              'two_halo':False,
+              'two_halo':'False',
               'hmf':'Despali16',
               'radius_max':5.5,
               'radius_min':1.,
               'photoz':'Truez',
-              'shear_richness_cov':False,
+              'shear_richness_cov':'False',
               'lensing_data':lensing_data_truez,
 'name_plot':'nfw - Duffy08'}
 analysis_Diemer15 = analysis_Duffy08.copy()
@@ -34,7 +34,7 @@ analysis['c_M'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for 
 
 #two-halo term
 analysis_2h = analysis_Diemer15.copy()
-analysis_2h['two_halo'] = True
+analysis_2h['two_halo'] = 'True'
 analysis_2h['radius_max'] = 15
 analysis_2h['name_plot'] = 'nfw - Diemer15 (2h)'
 twoh = [analysis_2h]
@@ -61,30 +61,26 @@ analysis['photoz'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) f
 
 #GammaCov covariance
 analysis_GammaCov1 = analysis_Diemer15.copy()
-analysis_GammaCov1['shear_richness_cov'] = True
+analysis_GammaCov1['shear_richness_cov'] = 'True'
 analysis_GammaCov1['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$)'
 GammaCov = [analysis_GammaCov1]
 analysis['GammaLambda'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in GammaCov]
 
-print('--- WLxN ---')
 analysis_list = []
 for ff, k in enumerate(analysis.keys()):
     analysis_list += analysis[k]
 analysis_WLxN = analysis_list
 
-print('--- N ---')
 analysis_N = copy.deepcopy(analysis_WLxN)
 for analysis_ in analysis_N:
     analysis_['type'] = 'N'
     _add_name_save.add_name_save_cluster_scaling_relation(analysis_)
 
-print('--- WL ---')
 analysis_WL = copy.deepcopy(analysis_WLxN)
 for analysis_ in analysis_WL:
     analysis_['type'] = 'WL'
     _add_name_save.add_name_save_cluster_scaling_relation(analysis_)
 
-print('--- MxN ---')
 analysis_MxN = copy.deepcopy(analysis_WLxN)
 for analysis_ in analysis_MxN:
     analysis_['type'] = 'MxN'
@@ -96,7 +92,6 @@ for analysis_ in analysis_MxN:
     analysis_['mass_file'] = name_save_cl_mass
     _add_name_save.add_name_save_cluster_scaling_relation(analysis_)
 
-print('--- M ---')
 analysis_M = copy.deepcopy(analysis_WLxN)
 for analysis_ in analysis_M:
     analysis_['type'] = 'M'

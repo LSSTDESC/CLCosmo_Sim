@@ -13,7 +13,8 @@ def load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner):
     N_obs, proxy_edges, z_edges = np.histogram2d(table_redmapper['redshift'], 
                                                                 table_redmapper['richness'],
                                                            bins=[z_corner, rich_corner])
-    if analysis_metadata['type'] == 'N': return N_obs
+    if analysis_metadata['type'] == 'N': 
+        return N_obs
     
     #Masses
     if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN':
@@ -31,7 +32,6 @@ def load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner):
                 log10Mass_err[i,j] = np.array(mass_in_bin['err_log10M200c_WL'])
         return N_obs, log10Mass, log10Mass_err
             
-
     # Lensing
     if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
         print('[load data]: stacked lensing profiles and errors')
@@ -57,12 +57,12 @@ def load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner):
 
         rup = analysis_metadata['radius_max']
         rlow = analysis_metadata['radius_min']
-        mask = (r_grid > rlow)*(r_grid < rup)
+        mask_is_in_fit_range = (r_grid > rlow)*(r_grid < rup)
 
-        DS_obs_mask = DS_obs[mask]
+        DS_obs_mask = DS_obs[mask_is_in_fit_range]
         DS_obs = DS_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
 
-        Err_obs_mask = Err_obs[mask]
+        Err_obs_mask = Err_obs[mask_is_in_fit_range]
         Err_obs = Err_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
         
-        return N_obs, DS_obs, Err_obs
+        return N_obs, DS_obs, Err_obs, mask_is_in_fit_range
