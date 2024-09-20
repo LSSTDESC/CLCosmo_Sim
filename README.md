@@ -2,7 +2,7 @@
 
 Authors: C. Payerne (constantin.payerne@gmail.com), Z. Zhang, C. Combet, M. Aguena, T. Guillemin, M. Ricci, S. Vitenti + the LSST Dark Energy Science Collaboration
 
-This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective.
+This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. We detai below the main features of the CLCosmo_Sim code.
 
 # Modeling
 In the /modeling directory
@@ -53,15 +53,17 @@ $$
 
 # Data extraction
 in the /extract_data directory
-The python files in this directory are dedicated to the background source extraction from cosmoDC2 using GCRCatalogs and Qserv, as well as computing cluster lensing individual lensing profiles. 
+The python files in this directory are dedicated to the background source extraction from cosmoDC2 using GCRCatalogs and Qserv, as well as computing cluster lensing individual lensing profiles. All the data that are used in this repository are not publicly available, and stored in the provate repository [CLCosmo_Sim_database](https://github.com/LSSTDESC/CLCosmo_Sim_database). Data are available on request for DESC members.
+
 ## Extraction of redMaPPer cluster catalog
-- `run_extract_cluster_catalog_redMaPPer.py`: extract catalog of redMaPPer clusters (position, richness, redshift), and their member galaxies (position, redshifts).
+- First, `python run_extract_cluster_catalog_redMaPPer.py` extracts the catalog of redMaPPer clusters (position, richness, redshift), and their member galaxies (position, redshifts).
 ## cosmoDC2: Extraction of galaxy catalogs behind redMaPPer clusters
-- `_config_extract_sources_in_cosmoDC2.py`: configuration file for source extraction in cosmoDC2, only the source selection. The chosen source selection is based on the photometric redshift PDF, such as a galaxy is chosen as a source if
+- `_config_extract_sources_in_cosmoDC2.py` is a configuration file for the cosmoDC2 source selection. The current selection is based on the photometric redshift PDFs, such as a galaxy is chosen as a source if
 
 $$
 \langle z\rangle_s > z_l + 0.2\hspace{0.5cm} \mathrm{and}\hspace{0.5cm} P(z_s > z_l) = \int_{z_{\rm cl}}^{\rm +\infty} dz_{\rm gal}p_{\rm photoz}(z_{\rm gal})> 0.8
 $$
+
 - `_utils_extract_sources_in_cosmoDC2.py` : functions to extract galaxy data using GCRcatalogs in the cosmoDC2 photoz-addons, and "truth" quantities using Qserv queries.
 - `_utils_photometric_redshifts.py` : functions. From photometric probability density functions, compute mean redshift, mean critical surface mass density for each galaxy.
 - `run_extract_sources_in_cosmoDC2.py` : module to extract background galaxy catalogs for each redMaPPer cluster, with photozs, each one saved in a pickle file. Individual catalogs can also not be saved, and lensing profiles directly computed.
