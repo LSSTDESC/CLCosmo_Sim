@@ -4,17 +4,14 @@ import pickle
 sys.path.append('../../')
 import _redshift_richness_bins as analysis
 
-Z_bin = analysis.Z_bin
-Richness_bin = analysis.Obs_bin
-
 def load(filename, **kwargs):
     """Loads GalaxyCluster object to filename using Pickle"""
     with open(filename, 'rb') as fin:
         return pickle.load(fin, **kwargs) 
     
-def read_covariance(photoz = 'True', radius = None):
+def read_covariance(Richness_bin, Z_bin, photoz = 'True', radius = None):
     
-    path_cov='/pbs/throng/lsst/users/cpayerne/cov_CLMassDC2/data/covariance/'
+    path_cov = '../../CLCosmo_Sim_database/shear-richness_covariance_data/'
     
     cov_DS_selection_bias_obs = np.zeros([len(radius), len(Richness_bin), len(Z_bin)])
     cov_err_DS_selection_bias_obs = np.zeros([len(radius), len(Richness_bin), len(Z_bin)])
@@ -27,7 +24,7 @@ def read_covariance(photoz = 'True', radius = None):
     
     return cov_DS_selection_bias_obs, cov_err_DS_selection_bias_obs
 
-def read_gamma():
+def read_gamma(Richness_bin, Z_bin):
     
     Gamma1 = np.zeros([len(Richness_bin), len(Z_bin)])
     Gamma1_dictionnary = load('HMF_Tinker08_beta1.pkl')

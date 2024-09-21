@@ -41,26 +41,39 @@ import argparse
 def mcmc(analysis_metadata):
 
     #this is where to put argparser
+    print()
+    for k in analysis_metadata.keys():
+        print(f'analysis_metadata[{k}] = {analysis_metadata[k]}')
     fit_cosmo = analysis_metadata['fit_cosmo']
 
-    Z_bin = analysis.Z_bin
-    z_corner = analysis.z_corner
-    Richness_bin = analysis.Obs_bin
-    rich_corner = analysis.rich_corner
+    #binning in redshift
+    if analysis_metadata['redshift_range'] == 'Full': 
+        Z_bin = analysis.Z_bin 
+        z_corner = analysis.z_corner
+    elif analysis_metadata['redshift_range'] == 'Partial':
+        Z_bin = analysis.Z_bin[analysis_metadata['redshift_bin_index']]
+        z_corner = analysis.z_corner[analysis_metadata['redshift_corner_index']]
+        
+    if analysis_metadata['richness_range'] == 'Full': 
+        Richness_bin = analysis.Obs_bin 
+        rich_corner = analysis.rich_corner
+    elif analysis_metadata['richness_range'] == 'Partial':
+        Richness_bin = analysis.Obs_bin[analysis_metadata['richness_bin_index']]
+        rich_corner = analysis.rich_corner[analysis_metadata['richness_corner_index']]
+        
     bins = {'redshift_bins':Z_bin, 'richness_bins': Richness_bin}
     fit_cosmo_str = 'No' if fit_cosmo=='False' else 'Yes'
-    print('[analysis]: '+analysis_metadata['type'])
-    fit_cosmo_str = 'No' if fit_cosmo=='False' else 'Yes'
-    print('[do we fit cosmo ?]: '+fit_cosmo_str)
     #############_Data_#############
 
     obs = _load_data.load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner)
+    
     if analysis_metadata['type'] == 'N': N_obs = obs
     if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN': N_obs, log10Mass, log10Mass_err = obs
     if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN': N_obs, DS_obs, Err_obs, mask_radius=obs
 
     ##############################################################################################################################
     # #############################################################################################################################
+    
     # cosmology
     Omega_m_true = 0.2648
     Omega_b_true = 0.0448
@@ -122,14 +135,14 @@ def mcmc(analysis_metadata):
                                                              logm_grid, z_grid, cosmo, cosmo_clmm,
                                                             two_halo = two_halo_bool)
         print('[load theory]: Selection bias: Shear-richness covariance (Ben Zhang)')
-        cov, cov_err = GammaLambda_Cov.read_covariance(photoz = analysis_metadata['photoz'], radius = r)
+        cov, cov_err = GammaLambda_Cov.read_covariance(Richness_bin, Z_bin, photoz = analysis_metadata['photoz'], radius = r)
         cov_DS_selection_bias_obs_mask = cov[mask_radius]
         cov_err_DS_selection_bias_obs_mask = cov_err[mask_radius]
         cov_DS_selection_bias_obs = cov_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
         cov_err_DS_selection_bias_obs = cov_err_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
 
         print('[load theory]: log-slope of the halo mass function (Ben Zhang)')
-        Gamma1 = GammaLambda_Cov.read_gamma()
+        Gamma1 = GammaLambda_Cov.read_gamma(Richness_bin, Z_bin)
 
         GammaCov = np.zeros(cov_DS_selection_bias_obs.shape)
         for i in range(len(Richness_bin)):
@@ -142,8 +155,8 @@ def mcmc(analysis_metadata):
         CLCovar = cl_covar.Covariance_matrix()
         Sij_partialsky = CLCovar.compute_theoretical_Sij(Z_bin, cosmo, f_sky)
 
-    def prior(theta):
-        if add_bias==False:
+    def prior(theta, add_bias='False'):
+        if add_bias=='False':
             proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m = theta
         else:
             proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b = theta
@@ -165,21 +178,14 @@ def mcmc(analysis_metadata):
         if proxy_sigmalog10m < -2: return -np.inf
         if proxy_sigmalog10m > 2: return -np.inf
 
-    add_bias==False
     def lnL(theta):
-       # if fit_cosmo == True:
-       #     proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Om, s8 = theta
-       #     if proxy_sigma0 < 0: return -np.inf
-       #     if Om > .5: return -np.inf
-       #     if Om < .1: return -np.inf
-       #     if s8 > 1: return -np.inf
-        #    if s8 < .5: return -np.inf
-        if add_bias==False:
+        
+        if analysis_metadata['add_bias_lensing']=='False':
             proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m = theta
         else:
             proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b = theta
 
-        prior(theta)
+        prior(theta, add_bias=analysis_metadata['add_bias_lensing'])
 
         theta_rm_new = [log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
 
@@ -216,32 +222,36 @@ def mcmc(analysis_metadata):
         Omega = 4*np.pi*(Omegaredmapper/(360**2/np.pi))
 
         N = Omega*cl_count.Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = integrand_count_new, grids = grids)
-        gaussian=True
-        if gaussian:
-            NAverageHaloBias = Omega * cl_count.Cluster_NHaloBias_ProxyZ(bins, integrand_count = integrand_count_new,
-                                                                         halo_bias = count_modelling_new['halo_bias'], 
-                                                                         grids = grids, cosmo = cosmo)
+        if analysis_metadata['type'] == 'N' or analysis_metadata['type'] == 'WLxN' or analysis_metadata['type'] == 'MxN':
+            gaussian=True
+            if gaussian:
+                NAverageHaloBias = Omega * cl_count.Cluster_NHaloBias_ProxyZ(bins, integrand_count = integrand_count_new,
+                                                                             halo_bias = count_modelling_new['halo_bias'], 
+                                                                             grids = grids, cosmo = cosmo)
+                CLCovar = cl_covar.Covariance_matrix()
+                NNSbb = CLCovar.sample_covariance_full_sky(Z_bin, Richness_bin, 
+                                                              NAverageHaloBias.T, 
+                                                              Sij_partialsky)
+                Cov_tot = NNSbb + np.diag(N.T.flatten())
+                CLCount_likelihood.lnLikelihood_Binned_Gaussian(N, N_obs.T, Cov_tot)
+                lnLCLCount = CLCount_likelihood.lnL_Binned_Gaussian
 
-            NNSbb = CLCovar.sample_covariance_full_sky(analysis.Z_bin, analysis.Obs_bin, 
-                                                          NAverageHaloBias.T, 
-                                                          Sij_partialsky)
-            Cov_tot = NNSbb + np.diag(N.T.flatten())
-            CLCount_likelihood.lnLikelihood_Binned_Gaussian(N, N_obs.T, Cov_tot)
-            lnLCLCount = CLCount_likelihood.lnL_Binned_Gaussian
+            else:
+                CLCount_likelihood.lnLikelihood_Binned_Poissonian(N, N_obs.T)
+                lnLCLCount = CLCount_likelihood.lnL_Binned_Poissonian
 
-        else:
-            CLCount_likelihood.lnLikelihood_Binned_Poissonian(N, N_obs.T)
-            lnLCLCount = CLCount_likelihood.lnL_Binned_Poissonian
-        #
         if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
             NDS_profiles = Omega * cl_lensing.Cluster_dNd0mega_Lensing_ProxyZ(bins, integrand_count = integrand_count_ds_new, 
                                                                               cluster_lensing = cluster_lensing, 
                                                                               lensing_radius = r_reshaped, grids = grids)
-
             DS_profiles = NDS_profiles/N
-            if analysis_metadata['shear_richness_cov']=='True': DS_profiles = DS_profiles + GammaCov/proxy_mulog10m
+            if analysis_metadata['add_bias_lensing']=='True': 
+                DS_profiles = (1+b)*DS_profiles
+            if analysis_metadata['shear_richness_cov']=='True': 
+                DS_profiles = DS_profiles + GammaCov/proxy_mulog10m
+            
             lnLCLWL = -.5*np.sum(((DS_profiles - DS_obs)/Err_obs)**2)
-        #
+
         if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN':
             NM = Omega * cl_mass.Cluster_dNd0mega_Mass_ProxyZ(bins, integrand_count = integrand_count_ds_new, grids = grids)
             Mth = NM/N
@@ -254,10 +264,7 @@ def mcmc(analysis_metadata):
         if analysis_metadata['type'] == 'WLxN': return lnLCLWL + lnLCLCount
         if analysis_metadata['type'] == 'MxN': return lnLCLM + lnLCLCount
 
-    #if fit_cosmo == True:
-    #    initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, Omega_m_true, sigma8_true]
-    #    ndim = 8
-    if add_bias==False: 
+    if analysis_metadata['add_bias_lensing']=='False': 
         initial = [proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
         labels = [r'\ln \lambda_0', r'\mu_z', r'\mu_m', r'\sigma_{\ln \lambda, 0}', r'\sigma_z', r'\sigma_m']
         ndim=6
@@ -275,5 +282,5 @@ def mcmc(analysis_metadata):
     sampler = emcee.EnsembleSampler(nwalker, ndim, lnL)
     sampler.run_mcmc(pos, 200, progress=True);
     flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
-    results={'flat_chains':flat_samples, 'analysis':analysis_metadata, label_parameters:labels}
-    #save_pickle(results, f'../chains/'+analysis_metadata['type']+'/'+analysis_metadata['name']+'.pkl')
+    results={'flat_chains':flat_samples, 'analysis':analysis_metadata, 'label_parameters':labels}
+    save_pickle(results, f'../chains/'+analysis_metadata['type']+'/'+analysis_metadata['name']+'.pkl')

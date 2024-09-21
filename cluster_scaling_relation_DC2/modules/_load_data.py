@@ -9,7 +9,8 @@ def load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner):
 
     # Count
     print('[load data]: counts')
-    table_redmapper = load('../../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+    path_to_data = '../../CLCosmo_Sim_database/data/'
+    table_redmapper = load(path_to_data + 'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
     N_obs, proxy_edges, z_edges = np.histogram2d(table_redmapper['redshift'], 
                                                                 table_redmapper['richness'],
                                                            bins=[z_corner, rich_corner])

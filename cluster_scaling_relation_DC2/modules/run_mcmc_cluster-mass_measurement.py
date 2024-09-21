@@ -46,12 +46,12 @@ data = np.load(analysis_WL_metadata['data_path'], allow_pickle=True)
 profiles = data['stacked profile']
 covariances = data['stacked covariance']
 
-fix_c = False if analysis_WL_metadata['cM_relation'] == None else True
+fix_c = False if analysis_WL_metadata['cM_relation'] == 'None' else True
 two_halo_bool = True if analysis_WL_metadata['two_halo']=='True' else False
 mass_fit =  fit_mass.fit_WL_cluster_mass(profile = profiles, covariance = covariances,
                                          a = 0, b =  analysis_WL_metadata['radius_min'], 
                                          rmax = analysis_WL_metadata['radius_max'], 
-                                         two_halo_term =two_halo_bool 
+                                         two_halo_term =two_halo_bool, 
                                          fix_c = fix_c,
                                          halo_model=analysis_WL_metadata['density_profile'],
                                          mc_relation=analysis_WL_metadata['cM_relation'], 

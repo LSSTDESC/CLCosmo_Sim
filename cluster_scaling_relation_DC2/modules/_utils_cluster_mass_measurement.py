@@ -39,7 +39,9 @@ class HaloMass_fromStackedProfile():
         self.R = np.array([float(r) for r in radius])
         self.inv_cov_ds = np.linalg.inv(self.cov_ds)
     
-    def set_halo_model(self, halo_model = 'nfw', use_cM_relation = None, cM_relation = 'Diemer15', use_two_halo_term = False, scatter_lnc = 0):
+    def set_halo_model(self, halo_model = 'nfw', use_cM_relation = None, 
+                       cM_relation = 'Diemer15', use_two_halo_term = False, 
+                       scatter_lnc = 0):
         r"""
         Attributes:
         -----------
