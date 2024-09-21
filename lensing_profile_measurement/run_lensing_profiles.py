@@ -17,7 +17,8 @@ def mask(table, z_cl):
     return table[masks]
 
 cosmo = clmm.Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448, Omega_k0 = 0.0)
-name_lens_cat = '../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl'
+path_to_data = '../../CLCosmo_Sim_database/data/'
+name_lens_cat = path_to_data + 'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl'
 #name_lens_cat = '/pbs/throng/lsst/users/cpayerne/CLMassDC2/data/lens_catalog_SkySim5000.pkl'
 ra_name, dec_name, z_name = 'ra', 'dec', 'redshift'
 obs_name = 'richness'
@@ -50,4 +51,4 @@ for i, name_file in enumerate(file):
     for s, n in enumerate(names): ind_profile[n].append(data_to_save[s])
 #break
 
-save_pickle(Table(ind_profile), '../data/ind_profile_redmapper.pkl')
+save_pickle(Table(ind_profile), path_to_data + 'ind_profile_redmapper.pkl')

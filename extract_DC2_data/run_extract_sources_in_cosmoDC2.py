@@ -37,13 +37,14 @@ import mysql
 from mysql.connector import Error
 import argparse
 
+path_to_data = '../../CLCosmo_Sim_database/data/'
+
 
 def collect_argparser():
     parser = argparse.ArgumentParser(description="Let's extract source cat")
     parser.add_argument("--index_split", type=int, required=True)
     parser.add_argument("--n_splits", type=int, required=True)
-    parser.add_argument("--lens_catalog_name", type=str, required=False, default='../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl',
-    help='choice between ../data/random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl and ../data/random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+    parser.add_argument("--lens_catalog_name", type=str, required=False, default=path_to_data+'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
     parser.add_argument("--compute_individual_lensing_profile", type=str, required=True)
     parser.add_argument("--save_catalog", type=str, required=False, default='False')
     parser.add_argument("--where_to_save_catalog", type=str, required=False, default='/sps/lsst/users/cpayerne/CLMassDC2/cosmoDC2/redmapper_clusters_new/')
@@ -65,9 +66,9 @@ lens_catalog_truncated=lens_catalog_truncated[np.array(split_lists[_config_extra
 n_cl_to_extract=len(lens_catalog_truncated)
 
 print(len(lens_catalog_truncated))
-if lens_catalog_name=='../data/random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl': suff_='_random'
-elif lens_catalog_name=='../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl': suff_=''
-path_where_to_save_profiles = f'../data/ind_profile_redmapper_per_cluster'+suff_+'_index/'
+if lens_catalog_name==path_to_data + 'random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl': suff_='_random'
+elif lens_catalog_name==path_to_data + 'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl': suff_=''
+path_where_to_save_profiles = path_to_data + f'ind_profile_redmapper_per_cluster'+suff_+'_index/'
 name_save = path_where_to_save_profiles+f'ind_profile_redmapper'+suff_+f'_split={_config_extract_sources_in_cosmoDC2.index_split}_nsplits={_config_extract_sources_in_cosmoDC2.n_splits}_ncl={n_cl_to_extract}.pkl'
 print(name_save)
 #load source catalogs
@@ -192,7 +193,7 @@ for n, lens in enumerate(lens_catalog_truncated):
             if not use_only_member_galaxies:
                 dat_extract_mag_cut_z_cut = dat_extract_mag_cut[mask_z]
             else:
-                name = '../data/matched_pairs_Mfofcut.fits'
+                name = path_to_data + 'matched_pairs_Mfofcut.fits'
                 dat = fits.open(name)
                 dat_open= dat[1].data
                 halo_id = int(dat_open['cat2_id'][dat_open['cat1_id'] == str(cluster_id)])

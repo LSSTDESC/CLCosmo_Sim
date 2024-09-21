@@ -13,11 +13,12 @@ def save_pickle(dat, filename, **kwargs):
     pickle.dump(dat, file)
     file.close()
 suff_cat = ''
-ind_profile = np.load('../data/ind_profile_redmapper'+suff_cat+'.pkl', allow_pickle = True)
+path_to_data = '../../CLCosmo_Sim_database/data/'
+ind_profile = np.load(path_to_data + 'ind_profile_redmapper'+suff_cat+'.pkl', allow_pickle = True)
 ind_profile['cluster_id'] = ind_profile['id']
 suff_coverage = '_full_coverage'
 if suff_coverage == '_partial_coverage':
-    cluster_id_avoid = np.load(f'../lensing_profile_measurement/cluster_id_with_partial_coverage'+suff_cat+'.npy', allow_pickle = True)
+    cluster_id_avoid = np.load(f'cluster_id_with_partial_coverage'+suff_cat+'.npy', allow_pickle = True)
     mask_id_avoid = np.invert(np.isin(ind_profile['id'], cluster_id_avoid))
     ind_profile = ind_profile[mask_id_avoid]
 Z_bin = analysis.Z_bin
@@ -43,7 +44,7 @@ covariance_true_stack = prf.bootstrap_covariance(profile = ind_profile,
                     Z_bin = Z_bin, Obs_bin = Obs_bin)
 
 t = {'stacked profile':profile_true_stack, 'stacked covariance': covariance_true_stack}
-save_pickle(t, f'../data/stacked_esd_profiles_redmapper'+suff_cat+f'_true{suff_coverage}.pkl', allow_pickle=True)
+save_pickle(t, path_to_data + f'stacked_esd_profiles_redmapper'+suff_cat+f'_true{suff_coverage}.pkl', allow_pickle=True)
 
 
 profile_BPZ_stack = prf.stacked_profile(profile = ind_profile,
@@ -64,7 +65,7 @@ covariance_BPZ_stack = prf.bootstrap_covariance(profile = ind_profile,
                     z_name = 'redshift', obs_name = 'richness',
                     Z_bin = Z_bin, Obs_bin = Obs_bin)
 t2 = {'stacked profile':profile_BPZ_stack, 'stacked covariance': covariance_BPZ_stack}
-save_pickle(t2, f'../data/stacked_esd_profiles_redmapper'+suff_cat+f'_BPZ{suff_coverage}.pkl', allow_pickle=True)
+save_pickle(t2, path_to_data + f'stacked_esd_profiles_redmapper'+suff_cat+f'_BPZ{suff_coverage}.pkl', allow_pickle=True)
 
 profile_flex_stack = prf.stacked_profile(profile = ind_profile,
  r_in = 'radius_flex',
@@ -85,5 +86,5 @@ covariance_flex_stack = prf.bootstrap_covariance(profile = ind_profile,
                     z_name = 'redshift', obs_name = 'richness',
                     Z_bin = Z_bin, Obs_bin = Obs_bin)
 t3 = {'stacked profile':profile_flex_stack, 'stacked covariance': covariance_flex_stack}
-save_pickle(t3, f'../data/stacked_esd_profiles_redmapper'+suff_cat+f'_flex{suff_coverage}.pkl', allow_pickle=True)
+save_pickle(t3, path_to_data + f'stacked_esd_profiles_redmapper'+suff_cat+f'_flex{suff_coverage}.pkl', allow_pickle=True)
 

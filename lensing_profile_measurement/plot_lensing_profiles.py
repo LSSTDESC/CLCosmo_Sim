@@ -8,7 +8,8 @@ plt.figure(figsize=(7,4))
 index = 12
 fmt = ['-', '--', '.']
 suff = '_full_coverage'
-data_true = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
+path_to_data = '../../CLCosmo_Sim_database/data/'
+data_true = np.load(path_to_data + f'stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles_true = data_true['stacked profile']
 z = data_true['stacked profile']['z_mean']
 for z_bin in analysis.Z_bin:
@@ -24,7 +25,7 @@ plt.tick_params(axis='both', which="both", labelsize= 13)
 plt.savefig('../fig/stacked_redmapper_profiles_attenuation.png', bbox_inches='tight', dpi=100)
 
 
-data = np.load('../data/ind_profile_redmapper.pkl', allow_pickle=True)
+data = np.load(path_to_data + 'ind_profile_redmapper.pkl', allow_pickle=True)
 plt.figure(figsize=(7,4))
 
 mask_z = (data['redshift'] < .5)*(data['redshift'] > .2)
@@ -71,7 +72,7 @@ plt.legend()
 plt.tick_params(axis='both', which="both", labelsize= 13)
 #plt.savefig('../fig/lensing_profiles.png', bbox_inches='tight', dpi=300)
 
-data = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
+data = np.load(path_to_data + f'stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles = data['stacked profile']
 covariances = data['stacked covariance']
 Z_bin = analysis.Z_bin
@@ -113,10 +114,10 @@ plt.figure(figsize=(7,4))
 index = 12
 fmt = ['-', '--', '.']
 label = ['cosmoDC2 - BPZ redshifts', 'cosmoDC2 - FlexZBoost redshifts']    
-data_true = np.load(f'../data/stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
+data_true = np.load(path_to_data + f'stacked_esd_profiles_redmapper_true{suff}.pkl', allow_pickle=True)
 profiles_true = data['stacked profile']
 z = data_true['stacked profile']['z_mean'][index]
-for i, data_name in enumerate([f'../data/stacked_esd_profiles_redmapper_BPZ{suff}.pkl', f'../data/stacked_esd_profiles_redmapper_flex{suff}.pkl']):
+for i, data_name in enumerate([path_to_data + f'stacked_esd_profiles_redmapper_BPZ{suff}.pkl', path_to_data + f'stacked_esd_profiles_redmapper_flex{suff}.pkl']):
     covariances_true = data['stacked covariance']
     data = np.load(data_name, allow_pickle=True)
     profiles = data['stacked profile']

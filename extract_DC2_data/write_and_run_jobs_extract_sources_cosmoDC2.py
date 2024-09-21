@@ -1,7 +1,8 @@
 import os, sys
 import numpy as np
 n_splits = 60
-catalog = '../data/random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl'
+path_to_data = '../../CLCosmo_Sim_database/data/'
+catalog = path_to_data + 'random_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl'
 for index_split in np.arange(n_splits):
     lines_base = [
         '#!/bin/sh',

@@ -272,7 +272,7 @@ def reshape_integrand(integrand_count, index_richness_grid_cut, index_z_grid_cut
     integrand_cut = integrand_cut[:,:,index_z_grid_cut]
     return integrand_cut
     
-def Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None): 
+def Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = None, grids = None, is_there_purity = True): 
  
     r"""
     Attributes:
