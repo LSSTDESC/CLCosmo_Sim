@@ -1,0 +1,16 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Mon Jul 29 10:21:11 CEST 2024
+* Job name:             WLxN
+* Job id:               19732249
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0344
+* Operating System:     CentOS Linux release 7.9.2009 (Core)
+* Architecture:         x86_64
+**********************************************************************

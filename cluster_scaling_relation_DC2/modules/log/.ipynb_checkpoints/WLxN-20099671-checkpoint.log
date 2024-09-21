@@ -1,0 +1,47 @@
+**********************************************************************
+*                         SLURM Batch System                         *
+*              IN2P3 Computing Centre, Villeurbanne FR               *
+**********************************************************************
+* Date:                 Thu Aug  1 22:09:25 CEST 2024
+* Job name:             WLxN
+* Job id:               20099671
+* User:                 cpayerne
+* Account:              lsst
+* Submit host:          jns-cpayerne.cc.in2p3.fr
+* Partition:            htc
+* Quality of service:   normal
+* Nodelist:             ccwslurm0314
+* Operating System:     CentOS Linux release 7.9.2009 (Core)
+* Architecture:         x86_64
+**********************************************************************
+
+analysis_metadata[type] = WLxN
+analysis_metadata[fit_cosmo] = False
+analysis_metadata[density_profile] = nfw
+analysis_metadata[cM_relation] = Diemer15
+analysis_metadata[two_halo] = False
+analysis_metadata[hmf] = Despali16
+analysis_metadata[radius_max] = 3.5
+analysis_metadata[radius_min] = 1.0
+analysis_metadata[photoz] = Truez
+analysis_metadata[shear_richness_cov] = False
+analysis_metadata[redshift_range] = Full
+analysis_metadata[richness_range] = Full
+analysis_metadata[redshift_bin_index] = [0 1 2 3 4 5 6]
+analysis_metadata[richness_bin_index] = [0 1 2 3]
+analysis_metadata[redshift_corner_index] = [0 1 2 3 4 5 6 7]
+analysis_metadata[richness_corner_index] = [0 1 2 3 4]
+analysis_metadata[lensing_data] = ../../data/stacked_esd_profiles_redmapper_true_full_coverage.pkl
+analysis_metadata[add_bias_lensing] = False
+analysis_metadata[name_plot] = nfw - Diemer15
+analysis_metadata[name] = MCMC_fit_m-r_WLxN_1-halo=nfw+c-M=Diemer15_rmin=1.0-rmax=3.5_photoz=Truez_hmf=Despali16
+[load data]: counts
+[load data]: stacked lensing profiles and errors
+[load theory]: compute HMF+bias mass-redshift grids at fixed cosmology
+[load theory]: compute mass-redshift lensing mass-redshift profiles
+[load theory]: Selection bias: Shear-richness covariance (Ben Zhang)
+[load theory]: log-slope of the halo mass function (Ben Zhang)
+[load theory]: Compute Sij matrix (SSC) from PySSC (Lacasa et al.)
+-270.42906366976626
+0.6476881504058838
+  0%|                                                                                                   | 0/200 [00:00<?, ?it/s]  0%|▍                                                                                        | 1/200 [01:02<3:28:21, 62.82s/it]
