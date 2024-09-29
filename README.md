@@ -1,8 +1,22 @@
 # CLCosmo_Sim repository
 
-Authors: C. Payerne (constantin.payerne@gmail.com), Z. Zhang, C. Combet, M. Aguena, T. Guillemin, M. Ricci, S. Vitenti + the LSST Dark Energy Science Collaboration
+Authors: C. Payerne (constantin.payerne@gmail.com), Z. Zhang et al. + the LSST Dark Energy Science Collaboration
 
 This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. We detai below the main features of the CLCosmo_Sim code.
+
+This repository is associated to the [DESC project 380](https://portal.lsstdesc.org/DESCPub/app/PB/show_project?pid=380).
+
+# Recquirements
+CLCosmo_Sim has the following dependencies:
+
+- [NumPy](https://www.numpy.org/) 
+- [SciPy](https://scipy.org/) 
+- [Astropy](https://www.astropy.org/) 
+- [Matplotlib](https://matplotlib.org/) 
+- [cluster-toolkit](https://cluster-toolkit.readthedocs.io/en/latest/)
+- [CCL](https://ccl.readthedocs.io/en/latest/) 
+- [PySSC](https://pyssc.readthedocs.io/en/latest/)
+- [NumCosmo](https://numcosmo.github.io/) 
 
 # Modeling
 In the /modeling directory
@@ -38,7 +52,7 @@ $$
 - `CL_COUNT_modeling_richness_mass_relation`: modeling the observable-mass relation (mean, disperion, probability density function). We consider the log-normal model
 
 $$
-P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left(-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{\sigma_{\ln\lambda|m,z}^2}\right)
+P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left(-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{2\sigma_{\ln\lambda|m,z}^2}\right)
 $$
 
 ## Bayesian inference pipeline
