@@ -13,6 +13,7 @@ CLCosmo_Sim has the following dependencies:
 - [SciPy](https://scipy.org/) 
 - [Astropy](https://www.astropy.org/) 
 - [Matplotlib](https://matplotlib.org/) 
+- [emcee](https://emcee.readthedocs.io/en/stable/)
 - [cluster-toolkit](https://cluster-toolkit.readthedocs.io/en/latest/)
 - [CCL](https://ccl.readthedocs.io/en/latest/) 
 - [PySSC](https://pyssc.readthedocs.io/en/latest/)
@@ -67,7 +68,7 @@ $$
 
 # Data extraction
 in the /extract_data directory
-The python files in this directory are dedicated to the background source extraction from cosmoDC2 using GCRCatalogs and Qserv, as well as computing cluster lensing individual lensing profiles. All the data (cluster/halo catalog, lensing profiles, ...) that are used in this repository are not publicly available, and stored in the private LSSTDESC repository [CLCosmo_Sim_database](https://github.com/LSSTDESC/CLCosmo_Sim_database). Data are available on request for DESC members. If you have access and want to use the data, please clone the `CLCosmo_Sim_database` repository in the same directory as `CLCosmo_Sim`.
+The python files in this directory are dedicated to the background source extraction from cosmoDC2 using GCRCatalogs and Qserv, as well as computing cluster lensing individual lensing profiles. All the data (cluster/halo catalog, lensing profiles, ...) that are used in this repository are not publicly available, and stored in the private LSSTDESC repository [CLCosmo_Sim_database](https://github.com/LSSTDESC/CLCosmo_Sim_database). Data are only available for DESC members. If you have access and want to use the data, please clone the `CLCosmo_Sim_database` repository in the same directory as `CLCosmo_Sim`.
 
 ## Extraction of redMaPPer cluster catalog
 - First, `python run_extract_cluster_catalog_redMaPPer.py` extracts the catalog of redMaPPer clusters (position, richness, redshift), and their member galaxies (position, redshifts).
