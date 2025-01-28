@@ -1,0 +1,10 @@
+#!/bin/sh
+# SBATCH options:
+#SBATCH --job-name=extract_cosmodc2_redmapper    # Job name
+#SBATCH --output=Logs/0_nsplits_2.log
+#SBATCH --partition=htc               # Partition choice
+#SBATCH --ntasks=1                    # Run a single task (by default tasks == CPU)
+#SBATCH --mem=8000                    # Memory in MB per default
+#SBATCH --time=0-6:00:00             # 7 days by default on htc partition
+source /pbs/home/c/cpayerne/setup_mydesc.sh
+python run_extract_sources_in_cosmoDC2.py --index_split 4 --n_splits 4200 --lens_catalog_name ../data/lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl --compute_individual_lensing_profile True --save_catalog False 
