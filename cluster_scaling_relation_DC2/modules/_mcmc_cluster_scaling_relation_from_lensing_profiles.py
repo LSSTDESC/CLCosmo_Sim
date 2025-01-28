@@ -7,6 +7,14 @@ import emcee
 import matplotlib.pyplot as plt
 import time
 import pickle
+import logging
+logger = logging.getLogger('Fit blinded data')
+logging.basicConfig(
+     format="{asctime} - {levelname} - {message}",
+     style="{",
+     datefmt="%Y-%m-%d %H:%M:%S",
+     level=logging.INFO,)
+
 import _load_data
 import _analysis_scaling_relation as analysis_list
 def save_pickle(dat, filename, **kwargs):
@@ -43,7 +51,7 @@ def mcmc(analysis_metadata):
     #this is where to put argparser
     print()
     for k in analysis_metadata.keys():
-        print(f'analysis_metadata[{k}] = {analysis_metadata[k]}')
+        logger.info(f'analysis_metadata[{k}] = {analysis_metadata[k]}')
     fit_cosmo = analysis_metadata['fit_cosmo']
 
     #binning in redshift
@@ -113,13 +121,19 @@ def mcmc(analysis_metadata):
     params = {'params_purity':theta_purity, 'params_completeness': theta_completeness, 'params_richness_mass_relation': theta_rm,
              'CCL_cosmology': cosmo, 'halo_mass_distribution': hmd, 'params_concentration_mass_relation': 'Duffy08'}
 
-    compute = {'compute_dNdzdlogMdOmega':True,'compute_richness_mass_relation':True, 'compute_completeness':True, 'compute_purity':True , 'compute_halo_bias':True}
-    print('[load theory]: compute HMF+bias mass-redshift grids at fixed cosmology')
+    compute = {'compute_dNdzdlogMdOmega':True,
+               'compute_richness_mass_relation':True,
+               'compute_completeness':True, 
+               'compute_dNdzdlogMdOmega_log_slope':False,
+               'compute_purity':True , 
+               'compute_halo_bias':True}
+    
+    logger.info('[load theory]: compute HMF+bias mass-redshift grids at fixed cosmology')
     count_modelling_new = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute, params = params)
 
     if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
 
-        print('[load theory]: compute mass-redshift lensing mass-redshift profiles')
+        logger.info('[load theory]: compute mass-redshift lensing mass-redshift profiles')
 
         rup = analysis_metadata['radius_max']
         rlow = analysis_metadata['radius_min']
@@ -134,23 +148,22 @@ def mcmc(analysis_metadata):
         cluster_lensing = cl_lensing.compute_cluster_lensing(r_reshaped, analysis_metadata['cM_relation'],
                                                              logm_grid, z_grid, cosmo, cosmo_clmm,
                                                             two_halo = two_halo_bool)
-        print('[load theory]: Selection bias: Shear-richness covariance (Ben Zhang)')
-        cov, cov_err = GammaLambda_Cov.read_covariance(Richness_bin, Z_bin, photoz = analysis_metadata['photoz'], radius = r)
+        logger.info('[load theory]: Selection bias: Shear-richness covariance (Ben Zhang)')
+        cov, cov_err = GammaLambda_Cov.read_covariance(Richness_bin, Z_bin, photoz = analysis_metadata['photoz'], 
+                                                       radius = r)
         cov_DS_selection_bias_obs_mask = cov[mask_radius]
         cov_err_DS_selection_bias_obs_mask = cov_err[mask_radius]
         cov_DS_selection_bias_obs = cov_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
         cov_err_DS_selection_bias_obs = cov_err_DS_selection_bias_obs_mask.reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
+        #convert to good units (physical units)
+        GammaCov = cov_DS_selection_bias_obs * (H0_true/100) * 10**11
+        GammaCov_err = cov_err_DS_selection_bias_obs * (H0_true/100) * 10**11
 
-        print('[load theory]: log-slope of the halo mass function (Ben Zhang)')
-        Gamma1 = GammaLambda_Cov.read_gamma(Richness_bin, Z_bin)
-
-        GammaCov = np.zeros(cov_DS_selection_bias_obs.shape)
-        for i in range(len(Richness_bin)):
-            for j in range(len(Z_bin)):
-                GammaCov[:,i,j] = cov_DS_selection_bias_obs[:,i,j] * Gamma1[i,j]
+        logger.info('[load theory]: log-slope of the halo mass function (Ben Zhang)')
+        Gamma1 = GammaLambda_Cov.read_gamma(Richness_bin, Z_bin, Gamma1_name = 'HMF_Despali16_Payerne_scaling_beta1_new.pkl')
 
     if analysis_metadata['type'] == 'N' or analysis_metadata['type'] == 'WLxN' or analysis_metadata['type'] == 'MxN':
-        print('[load theory]: Compute Sij matrix (SSC) from PySSC (Lacasa et al.)')
+        logger.info('[load theory]: Compute Sij matrix (SSC) from PySSC (Lacasa et al.)')
         f_sky = (439.78987/(360**2/np.pi))
         CLCovar = cl_covar.Covariance_matrix()
         Sij_partialsky = CLCovar.compute_theoretical_Sij(Z_bin, cosmo, f_sky)
@@ -204,6 +217,7 @@ def mcmc(analysis_metadata):
 
         compute_new = {'compute_dNdzdlogMdOmega':fit_cosmo,
                        'compute_richness_mass_relation':True, 
+                       'compute_dNdzdlogMdOmega_log_slope':False,
                        'compute_completeness':False, 
                        'compute_purity':False,
                        'compute_halo_bias':False}
@@ -248,9 +262,17 @@ def mcmc(analysis_metadata):
             if analysis_metadata['add_bias_lensing']=='True': 
                 DS_profiles = (1+b)*DS_profiles
             if analysis_metadata['shear_richness_cov']=='True': 
-                DS_profiles = DS_profiles + GammaCov/proxy_mulog10m
-            
-            lnLCLWL = -.5*np.sum(((DS_profiles - DS_obs)/Err_obs)**2)
+                factor = (np.log(10) * Gamma1 / proxy_mulog10m)
+                DS_profiles = DS_profiles + factor * GammaCov 
+                Err_obs2_tot = Err_obs**2 + factor**2 * GammaCov_err**2
+                Err_obs_tot = Err_obs2_tot**.5
+                Sum_logSigma = np.sum(np.log(Err_obs_tot.flatten()**2))
+            else: 
+                Err_obs_tot = Err_obs
+                Sum_log = 0
+                
+
+            lnLCLWL = -0.5*np.sum(((DS_profiles - DS_obs)/Err_obs_tot)**2) - 0.5*Sum_logSigma
 
         if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN':
             NM = Omega * cl_mass.Cluster_dNd0mega_Mass_ProxyZ(bins, integrand_count = integrand_count_ds_new, grids = grids)
@@ -274,9 +296,9 @@ def mcmc(analysis_metadata):
         labels = [r'\ln \lambda_0', r'\mu_z', r'\mu_m', r'\sigma_{\ln \lambda, 0}', r'\sigma_z', r'\sigma_m', 'b']
         ndim=7
     t = time.time()
-    print(lnL(initial))
+    logger.info(lnL(initial))
     tf = time.time()
-    print(tf-t)
+    logger.info(tf-t)
     nwalker = 100
     pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
     sampler = emcee.EnsembleSampler(nwalker, ndim, lnL)

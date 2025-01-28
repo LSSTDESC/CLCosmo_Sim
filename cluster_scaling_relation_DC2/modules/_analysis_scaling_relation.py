@@ -4,7 +4,7 @@ import _add_name_save
 sys.path.append('../../')
 import _redshift_richness_bins as analysis_
 analysis = {}
-path_to_data = '../../CLCosmo_Sim_database/data/'
+path_to_data = '../../../CLCosmo_Sim_database/data/'
 lensing_data_truez = path_to_data + 'stacked_esd_profiles_redmapper_true_full_coverage.pkl'
 lensing_data_bpz = path_to_data + 'stacked_esd_profiles_redmapper_BPZ_full_coverage.pkl'
 lensing_data_flex = path_to_data + 'stacked_esd_profiles_redmapper_flex_full_coverage.pkl'
@@ -28,17 +28,17 @@ analysis_Duffy08_baseline = {'type': 'WLxN',
                             'lensing_data':lensing_data_truez,
                             'add_bias_lensing':'False',
                             'name_plot':'baseline'}
-analysis_Duffy08_baseline_low_z = analysis_Duffy08_baseline.copy()
-analysis_Duffy08_baseline_low_z['redshift_range'] = 'Partial'
-analysis_Duffy08_baseline_low_z['redshift_bin_index'] = np.arange(len(analysis_.Z_bin)-1)
-analysis_Duffy08_baseline_low_z['redshift_corner_index'] = np.arange(len(analysis_.z_corner)-1)
-analysis_Duffy08_baseline_low_z['name_plot'] = 'baseline - low z'
+# analysis_Duffy08_baseline_low_z = analysis_Duffy08_baseline.copy()
+# analysis_Duffy08_baseline_low_z['redshift_range'] = 'Partial'
+# analysis_Duffy08_baseline_low_z['redshift_bin_index'] = np.arange(len(analysis_.Z_bin)-1)
+# analysis_Duffy08_baseline_low_z['redshift_corner_index'] = np.arange(len(analysis_.z_corner)-1)
+# analysis_Duffy08_baseline_low_z['name_plot'] = 'baseline - low z'
 
-analysis_Duffy08_baseline_low_richness = analysis_Duffy08_baseline.copy()
-analysis_Duffy08_baseline_low_richness['richness_range'] = 'Partial'
-analysis_Duffy08_baseline_low_richness['richness_bin_index'] = np.arange(len(analysis_.Obs_bin)-1)
-analysis_Duffy08_baseline_low_richness['richness_corner_index'] = np.arange(len(analysis_.rich_corner)-1)
-analysis_Duffy08_baseline_low_richness['name_plot'] = 'baseline - low richness'
+# analysis_Duffy08_baseline_low_richness = analysis_Duffy08_baseline.copy()
+# analysis_Duffy08_baseline_low_richness['richness_range'] = 'Partial'
+# analysis_Duffy08_baseline_low_richness['richness_bin_index'] = np.arange(len(analysis_.Obs_bin)-1)
+# analysis_Duffy08_baseline_low_richness['richness_corner_index'] = np.arange(len(analysis_.rich_corner)-1)
+# analysis_Duffy08_baseline_low_richness['name_plot'] = 'baseline - low richness'
 
 #baseline = [
             #analysis_Duffy08_baseline, 
@@ -98,37 +98,87 @@ analysis_Duffy08_baseline_low_richness['name_plot'] = 'baseline - low richness'
 # analysis['hmf'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in analysis_hmf]
 
 # #photoz
-analysis_BPZ = analysis_Duffy08_baseline.copy()
-analysis_BPZ['lensing_data'] = lensing_data_bpz
-analysis_BPZ['name_plot'] = 'BPZ'
-analysis_BPZ['photoz'] = 'BPZ'
+# analysis_BPZ = analysis_Duffy08_baseline.copy()
+# analysis_BPZ['lensing_data'] = lensing_data_bpz
+# analysis_BPZ['name_plot'] = 'BPZ'
+# analysis_BPZ['photoz'] = 'BPZ'
 
-analysis_BPZb = analysis_Duffy08_baseline.copy()
-analysis_BPZb['lensing_data'] = lensing_data_bpz
-analysis_BPZb['name_plot'] = 'BPZ(1+b)'
-analysis_BPZb['photoz'] = 'BPZ'
-analysis_BPZb['add_bias_lensing'] = 'True'
+# analysis_BPZb = analysis_Duffy08_baseline.copy()
+# analysis_BPZb['lensing_data'] = lensing_data_bpz
+# analysis_BPZb['name_plot'] = 'BPZ(1+b)'
+# analysis_BPZb['photoz'] = 'BPZ'
+# analysis_BPZb['add_bias_lensing'] = 'True'
 
-analysis_flex = analysis_Duffy08_baseline.copy()
-analysis_flex['lensing_data'] = lensing_data_flex
-analysis_flex['name_plot'] = 'FleXZBoost'
-analysis_flex['photoz'] = 'flex'
+# analysis_flex = analysis_Duffy08_baseline.copy()
+# analysis_flex['lensing_data'] = lensing_data_flex
+# analysis_flex['name_plot'] = 'FleXZBoost'
+# analysis_flex['photoz'] = 'flex'
 
-analysis_flexb = analysis_Duffy08_baseline.copy()
-analysis_flexb['lensing_data'] = lensing_data_flex
-analysis_flexb['name_plot'] = 'FleXZBoost(1+b)'
-analysis_flexb['photoz'] = 'flex'
-analysis_flexb['add_bias_lensing'] = 'True'
+# analysis_flexb = analysis_Duffy08_baseline.copy()
+# analysis_flexb['lensing_data'] = lensing_data_flex
+# analysis_flexb['name_plot'] = 'FleXZBoost(1+b)'
+# analysis_flexb['photoz'] = 'flex'
+# analysis_flexb['add_bias_lensing'] = 'True'
 
-photoz = [analysis_BPZ,analysis_BPZb,analysis_flex,analysis_flexb]
-analysis['photoz'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in photoz]
+# photoz = [analysis_BPZ,analysis_BPZb,analysis_flex,analysis_flexb]
+# analysis['photoz'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in photoz]
+
+#impact radius cut
+#analysis_4 = analysis_Duffy08_baseline.copy()
+#analysis_4['radius_max'] = 4
+#analysis_4['name_plot'] = r'baseline - Rmax = 4'
+#analysis_45 = analysis_Duffy08_baseline.copy()
+#analysis_45['radius_max'] = 4.5
+#analysis_45['name_plot'] = r'baseline - Rmax = 4.5'
+#analysis_5 = analysis_Duffy08_baseline.copy()
+#analysis_5['radius_max'] = 5
+#analysis_5['name_plot'] = r'baseline - Rmax = 5'
+#analysis_55 = analysis_Duffy08_baseline.copy()
+#analysis_55['radius_max'] = 5.5
+#analysis_55['name_plot'] = r'baseline - Rmax = 5.5'
+#analysis_8 = analysis_Duffy08_baseline.copy()
+#analysis_8['radius_max'] = 8
+#analysis_8['name_plot'] = r'baseline - Rmax = 8'
+#analysis_10 = analysis_Duffy08_baseline.copy()
+#analysis_10['radius_max'] = 10
+#analysis_10['name_plot'] = r'baseline - Rmax = 10'
+#rmax = [analysis_4, analysis_45, analysis_5, analysis_55, analysis_8, analysis_10]
+#analysis['Rmax'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in rmax]
 
 # #GammaCov covariance
-# analysis_GammaCov1 = analysis_Diemer15.copy()
-# analysis_GammaCov1['shear_richness_cov'] = 'True'
-# analysis_GammaCov1['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$)'
-# GammaCov = [analysis_GammaCov1]
-# analysis['GammaLambda'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in GammaCov]
+analysis_GammaCov1 = analysis_Duffy08_baseline.copy()
+analysis_GammaCov1['shear_richness_cov'] = 'True'
+analysis_GammaCov1['photoz'] = 'Truez'
+analysis_GammaCov1['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$)'
+
+analysis_GammaCov2 = analysis_Duffy08_baseline.copy()
+analysis_GammaCov2['shear_richness_cov'] = 'True'
+analysis_GammaCov2['photoz'] = 'BPZ'
+analysis_GammaCov2['lensing_data'] = lensing_data_bpz
+analysis_GammaCov2['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$) + BPZ'
+
+analysis_GammaCov2bis = analysis_Duffy08_baseline.copy()
+analysis_GammaCov2bis['shear_richness_cov'] = 'True'
+analysis_GammaCov2bis['photoz'] = 'BPZ'
+analysis_GammaCov2bis['lensing_data'] = lensing_data_bpz
+analysis_GammaCov2bis['add_bias_lensing'] = 'True'
+analysis_GammaCov2bis['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$) + BPZ (1+b)'
+
+analysis_GammaCov3 = analysis_Duffy08_baseline.copy()
+analysis_GammaCov3['shear_richness_cov'] = 'True'
+analysis_GammaCov3['photoz'] = 'flex'
+analysis_GammaCov3['lensing_data'] = lensing_data_flex
+analysis_GammaCov3['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$) + FlexZBoost'
+
+analysis_GammaCov3bis = analysis_Duffy08_baseline.copy()
+analysis_GammaCov3bis['shear_richness_cov'] = 'True'
+analysis_GammaCov3bis['photoz'] = 'flex'
+analysis_GammaCov3bis['lensing_data'] = lensing_data_flex
+analysis_GammaCov3bis['add_bias_lensing'] = 'True'
+analysis_GammaCov3bis['name_plot'] = r'nfw + Cov($\Delta\Sigma,\lambda$) + FlexZBoost (1+b)'
+
+GammaCov = [analysis_GammaCov1, analysis_GammaCov2, analysis_GammaCov3, analysis_GammaCov2bis, analysis_GammaCov3bis]
+analysis['GammaLambda'] = [_add_name_save.add_name_save_cluster_scaling_relation(a) for a in GammaCov]
 
 analysis_list = []
 for ff, k in enumerate(analysis.keys()):
