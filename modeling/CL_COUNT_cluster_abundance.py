@@ -42,6 +42,30 @@ def compute_dNdzdlogMdOmega_grid(logm_grid, z_grid, cosmo, hmd):
         dNdzdlogMdOmega_grid[:,i] = hmf.dndlog10M(logm_grid ,z, cosmo, hmd) * hmf.dVdzdOmega(z, cosmo)
     return dNdzdlogMdOmega_grid
 
+def compute_dNdzdlogMdOmega_log_slope_grid(logm_grid, z_grid, cosmo, hmd):
+    r"""
+    Attributes:
+    -----------
+    logm_grid : array
+        log10M tabulated axis
+    z_grid : array
+        redshift tabulated axis
+    cosmo : CCL cosmology
+        cosmology
+    hmd; CCL hmd object
+        halo definition
+    Returns:
+    --------
+    dN_dzdlogMdOmega : array
+        tabulated dzdlogMdOmega
+    """
+    dNdzdlogMdOmega_log_slope_grid = np.zeros([len(logm_grid), len(z_grid)])
+    for i, z in enumerate(z_grid):
+        ln = np.log10(hmf.dndlog10M(logm_grid - 0.001 ,z, cosmo, hmd) * hmf.dVdzdOmega(z, cosmo))
+        ln_dm = np.log10(hmf.dndlog10M(logm_grid + 0.001 ,z, cosmo, hmd) * hmf.dVdzdOmega(z, cosmo))
+        dNdzdlogMdOmega_log_slope_grid[:,i] = -(ln_dm - ln)/(2*0.001)
+    return dNdzdlogMdOmega_log_slope_grid
+
 def compute_halo_bias_grid(logm_grid, z_grid, cosmo, cM = 'Diemer15'):
     r"""
     Attributes:
@@ -215,6 +239,14 @@ def recompute_count_modelling(count_modelling, compute = None, grids = None, par
             dNdzdlogMdOmega_new[i,:,:] = dNdzdlogMdOmega_
         count_modelling['dNdzdlogMdOmega'] = dNdzdlogMdOmega_new
         
+    if compute['compute_dNdzdlogMdOmega_log_slope']:
+        dNdzdlogMdOmega_log_slope_ = compute_dNdzdlogMdOmega_log_slope_grid(grids['logm_grid'], grids['z_grid'], 
+                                                        params['CCL_cosmology'], params['halo_mass_distribution'])
+        dNdzdlogMdOmega_log_slope_new = np.zeros(shape_integrand)
+        for i in range(shape_integrand[0]):
+            dNdzdlogMdOmega_log_slope_new[i,:,:] = dNdzdlogMdOmega_log_slope_
+        count_modelling['dNdzdlogMdOmega_log_slope'] = dNdzdlogMdOmega_log_slope_new
+        
     if compute['compute_halo_bias']:
         count_modelling['halo_bias'] = compute_halo_bias_grid(grids['logm_grid'], grids['z_grid'], 
                                                         params['CCL_cosmology'], cM = params['params_concentration_mass_relation'])
@@ -222,7 +254,7 @@ def recompute_count_modelling(count_modelling, compute = None, grids = None, par
     
     return count_modelling
 
-def define_count_integrand(count_modelling, adds):
+def define_count_integrand(count_modelling, adds, core = 'dNdzdlogMdOmega'):
     r"""
     define count integrand with the option of considering purity and/or completeness
     Attributes:
@@ -236,7 +268,7 @@ def define_count_integrand(count_modelling, adds):
     integrand: array
         integrand on the mass, richness and redshift axis
     """
-    dNdzdlogMdOmega = count_modelling['dNdzdlogMdOmega']
+    dNdzdlogMdOmega = count_modelling[core]
     richness_mass_relation = count_modelling['richness_mass_relation']
     purity = count_modelling['purity']
     completeness = count_modelling['completeness']
@@ -319,6 +351,26 @@ def Cluster_NHaloBias_ProxyZ(bins, integrand_count = None, halo_bias = None, gri
             index_z_grid_cut, z_grid_cut = reshape_axis(z_grid, z_bin)
             integrand_cut = reshape_integrand(integrand_count, index_richness_grid_cut, index_z_grid_cut)
             halo_bias_cut = halo_bias[:,index_z_grid_cut]
+            integral = simps(simps(simps(integrand_cut, 
+                                         richness_grid_cut, axis=0) * halo_bias_cut, 
+                                         logm_grid, axis=0), 
+                                         z_grid_cut, axis=0)
+            bias_dNdOmega[i,j] = integral
+    return bias_dNdOmega
+
+def Cluster_NHMFLogSlope_ProxyZ(bins, integrand_count = None, log_slope = None, grids = None, cosmo = None):
+
+    richness_grid, logm_grid, z_grid = grids['richness_grid'], grids['logm_grid'], grids['z_grid']
+    z_bins, richness_bins = bins['redshift_bins'], bins['richness_bins']
+    bias_dNdOmega = np.zeros([len(richness_bins), len(z_bins)])
+    for i, richness_bin in enumerate(richness_bins):
+        #resize richness-axis
+        index_richness_grid_cut, richness_grid_cut = reshape_axis(richness_grid, richness_bin)
+        for j, z_bin in enumerate(z_bins):
+            #resize redshift-axis
+            index_z_grid_cut, z_grid_cut = reshape_axis(z_grid, z_bin)
+            integrand_cut = reshape_integrand(integrand_count, index_richness_grid_cut, index_z_grid_cut)
+            halo_bias_cut = log_slope[:,index_z_grid_cut]
             integral = simps(simps(simps(integrand_cut, 
                                          richness_grid_cut, axis=0) * halo_bias_cut, 
                                          logm_grid, axis=0), 
