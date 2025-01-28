@@ -17,12 +17,14 @@ and GCRCatalogs:
 """
 def _fix_axis_ratio(q_bad):
     # back out incorrect computation of q using Johnsonb function
+    # from https://github.com/LSSTDESC/gcr-catalogs/blob/ellipticity_bug_fix/GCRCatalogs/cosmodc2.py
     e_jb = np.sqrt((1 - q_bad**2)/(1 + q_bad**2))
     q_new = np.sqrt((1 - e_jb)/(1 + e_jb)) # use correct relationship to compute q from e_jb 
     return q_new
 
 def _fix_ellipticity_disk_or_bulge(ellipticity):
     # back out incorrect computation of q using Johnsonb function 
+    # from https://github.com/LSSTDESC/gcr-catalogs/blob/ellipticity_bug_fix/GCRCatalogs/cosmodc2.py
     q_bad = (1-ellipticity)/(1+ellipticity) #use default e definition to calculate q
     # q_bad incorrectly computed from e_jb using q_bad = sqrt((1 - e_jb^2)/(1 + e_jb^2))
     q_new = _fix_axis_ratio(q_bad)
