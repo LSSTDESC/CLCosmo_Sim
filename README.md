@@ -2,7 +2,7 @@
 
 Authors: C. Payerne (constantin.payerne@gmail.com), Z. Zhang et al. + the LSST Dark Energy Science Collaboration
 
-This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. We detai below the main features of the CLCosmo_Sim code.
+This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. We detail below the main features of the LSST DESC CLCosmo_Sim code.
 
 This repository is associated to the [DESC project 380](https://portal.lsstdesc.org/DESCPub/app/PB/show_project?pid=380).
 
@@ -55,6 +55,19 @@ $$
 $$
 P(\lambda|m,z) \propto \frac{1}{\lambda}\exp\left(-\frac{[\ln\lambda - \langle \ln \lambda|m, z\rangle]^2}{2\sigma_{\ln\lambda|m,z}^2}\right)
 $$
+
+where we use
+
+$$
+\langle \ln \lambda|m, z\rangle = \ln\lambda_0 + \mu_z\ln\left(\frac{1 + z}{1 + z_0}\right) + \mu_m\log_{10}\left(\frac{m}{m_0}\right)
+$$
+
+and
+
+$$
+\sigma_{\ln \lambda|m, z} = \sigma_{\ln\lambda_0} + \sigma_z\ln\left(\frac{1 + z}{1 + z_0}\right) + \sigma_m\log_{10}\left(\frac{m}{m_0}\right).
+$$
+
 
 ## Bayesian inference pipeline
 In this work we aim at infering the parameters of the DC2 redMaPPer mass-richness relation by drawing the posterior distribution
