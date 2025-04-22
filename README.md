@@ -1,8 +1,10 @@
 # CLCosmo_Sim repository
 
-Authors: C. Payerne (constantin.payerne@gmail.com), Z. Zhang et al. + the LSST Dark Energy Science Collaboration
+Authors: Payerne, Constantin (constantin.payerne@gmail.com) ;  Zhang, Zhuowen ;  Aguena, Michel ;  Combet, Céline ;  Guillemin, Thibault ;  Ricci, Marina ; Amouroux, Nathan ;  Avestruz, Camille ;  Barroso, Eduardo J. ;  Farahi, Arya ;  Kovacs, Eve ;  Murray, Calum ; Rau, Markus M. ;  Rykoff, Eli S. ;  Schmidt, Samuel J. and  the LSST Dark Energy Science Collaboration
 
-This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. We detail below the main features of the LSST DESC CLCosmo_Sim code.
+This repository is dedicated to the analysis of the redMaPPer mass-richness relation in the LSST DESC DC2 simulations from a cluster weak gravitational lensing and abundance perspective. The work is presented in the paper ["Analysis of the weak lensing mass-richness relation of redMaPPer clusters in the LSST DESC DC2 simulations"](https://ui.adsabs.harvard.edu/abs/2025arXiv250208444P/abstract). 
+
+We detail below the main features of the LSST DESC CLCosmo_Sim code.
 
 This repository is associated to the [DESC project 380](https://portal.lsstdesc.org/DESCPub/app/PB/show_project?pid=380).
 
