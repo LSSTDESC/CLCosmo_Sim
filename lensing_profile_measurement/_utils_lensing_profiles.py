@@ -15,6 +15,7 @@ def compute_lensing_profile(cluster_id, ra, dec, z, bin_edges, label, table, cos
         cl.galcat['dst'] = sigma_c*cl.galcat['et']
         cl.galcat['dsx'] = sigma_c*cl.galcat['ex']
         cl.galcat['w_ls'] = sigma_c**(-2.)
+        #print(max(cl.galcat['theta'] * cosmo.eval_da(z)))
         ce = clmm.ClusterEnsemble('id', [])
         p = ce.make_individual_radial_profile(cl, 'Mpc', bins=bin_edges, error_model='ste',
                                            cosmo=cosmo, tan_component_in='dst', cross_component_in='dsx',

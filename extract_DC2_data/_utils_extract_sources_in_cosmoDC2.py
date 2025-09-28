@@ -103,26 +103,28 @@ def extract(lens_redshift=None,
         background galaxy catalog
     """
     #qserv
-    query_mysql = qserv_query
-    tab = pd.read_sql_query(query_mysql, conn_qserv)
-    try: 
-        tab = QTable.from_pandas(tab)
-    except: 
-        print('no data')
-        return None
-    #compute reduced shear and ellipticities
-    tab['g1'], tab['g2'] = clmm.utils.convert_shapes_to_epsilon(tab['shear1'],tab['shear2'], 
-                                                                shape_definition = 'shear',
-                                                                kappa = tab['kappa'])
-    ellipticity_uncorr_e1 = tab['e1_true_uncorr']
-    ellipticity_uncorr_e2 = tab['e2_true_uncorr']
-    ellipticity_corr_e1, ellipticity_corr_e2 = correct_shear_ellipticity(ellipticity_uncorr_e1, ellipticity_uncorr_e2)
-    tab['e1_true'] = ellipticity_corr_e1
-    tab['e2_true'] = ellipticity_corr_e2
-    tab['e1'], tab['e2'] = clmm.utils.compute_lensed_ellipticity(tab['e1_true'], tab['e2_true'], 
-                                                                 tab['shear1'], tab['shear2'], 
-                                                                 tab['kappa'])
-    return tab
+    if GCRcatalog==None:
+        query_mysql = qserv_query
+        tab = pd.read_sql_query(query_mysql, conn_qserv)
+        try: 
+            tab = QTable.from_pandas(tab)
+        except: 
+            print('no data')
+            return None
+        #compute reduced shear and ellipticities
+        tab['g1'], tab['g2'] = clmm.utils.convert_shapes_to_epsilon(tab['shear1'],tab['shear2'], 
+                                                                    shape_definition = 'shear',
+                                                                    kappa = tab['kappa'])
+        ellipticity_uncorr_e1 = tab['e1_true_uncorr']
+        ellipticity_uncorr_e2 = tab['e2_true_uncorr']
+        ellipticity_corr_e1, ellipticity_corr_e2 = correct_shear_ellipticity(ellipticity_uncorr_e1, ellipticity_uncorr_e2)
+        tab['e1_true'] = ellipticity_corr_e1
+        tab['e2_true'] = ellipticity_corr_e2
+        tab['e1'], tab['e2'] = clmm.utils.compute_lensed_ellipticity(tab['e1_true'], tab['e2_true'], 
+                                                                     tab['shear1'], tab['shear2'], 
+                                                                     tab['kappa'])
+        return tab
+        
 
 def extract_photoz(z_cl, pz_catalog=None, z_bins_pz=None, healpix_list=None, 
                    id_gal_to_extract=None, _query_photoz=None, cosmo=None):
