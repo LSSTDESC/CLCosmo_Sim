@@ -157,7 +157,6 @@ def Cluster_dNd0mega_Lensing_ProxyZ(bins, integrand_count = None, cluster_lensin
                                          logm_grid, axis=0), 
                                          z_grid_cut, axis=0)
                 
-    
     return stacked_lensing_profile
 
 

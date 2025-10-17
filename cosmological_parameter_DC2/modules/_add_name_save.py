@@ -6,7 +6,7 @@ def add_name_save_cluster_mass_measurement(analysis):
     add_lensing_infos = add_lensing_infos+ '_rmin='+str(analysis['radius_min'])+'-rmax='+str(analysis['radius_max'])
     add_lensing_infos = add_lensing_infos + '_photoz='+analysis['photoz']
     name = name + add_lensing_infos
-    name_save= '../../cluster_mass_measurement/' + name + '.pkl'
+    name_save= name + '.pkl'
     return name, name_save
 
 def add_name_save_cluster_scaling_relation(analysis):

@@ -9,10 +9,6 @@ from clmm import Cosmology
 from astropy.table import Table, QTable, hstack, vstack
 import pyccl as ccl
 from astropy.cosmology import FlatLambdaCDM
-cosmo = Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448, Omega_k0 = 0.0)
-cosmo_clmm = Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448, Omega_k0 = 0.0)
-cosmo_ccl  = ccl.Cosmology(Omega_c=0.265-0.0448, Omega_b=0.0448, h=0.71, A_s=2.1e-9, n_s=0.96, Neff=0, Omega_g=0)
-cosmo_astropy = FlatLambdaCDM(H0=71.0, Om0=0.265, Ob0 = 0.0448)
 import emcee
 #ccl m-c relations
 deff = ccl.halos.massdef.MassDef(200, 'critical')
@@ -25,7 +21,7 @@ definition_200m = ccl.halos.massdef.MassDef(200, 'matter')
 
 class HaloMass_fromStackedProfile():
     r"""a class for the estimation of weak lensing mass from shear profile"""
-    def __init__(self, cluster_z, radius, gt, covariance):
+    def __init__(self, cosmo_ccl, cluster_z, radius, gt, covariance):
         r"""
         Attributes:
         -----------
@@ -34,8 +30,21 @@ class HaloMass_fromStackedProfile():
         covariance: array
             covariance matrix
         """
+        self.cosmo_ccl = cosmo_ccl
+        H0_true = 71
+        h = H0_true/100
+        Omega_b_true = 0.02258 / (h**2)
+        Omega_c_true = 0.1109 / (h**2)
+        Omega_m_true = Omega_b_true + Omega_c_true
+        sigma8_true = 0.8
+        ns_true = 0.963
+        self.cosmo_clmm = Cosmology(H0 = H0_true, Omega_dm0 = Omega_c_true, Omega_b0 = Omega_b_true, Omega_k0 = 0.0)
+        self.cosmo_clmm.be_cosmo = self.cosmo_ccl
         self.cluster_z  = cluster_z
-        self.ds_obs, self.cov_ds, self.R = gt, covariance, radius
+        self.ds_obs, cov_ds, self.R = gt, covariance, radius
+        self.cov_ds = np.zeros(cov_ds.shape)
+        for i in range(len(self.ds_obs)):
+            self.cov_ds[i,i] = cov_ds[i,i]
         self.R = np.array([float(r) for r in radius])
         self.inv_cov_ds = np.linalg.inv(self.cov_ds)
     
@@ -57,14 +66,14 @@ class HaloMass_fromStackedProfile():
         self.halo_model = halo_model
         #clmm 1h-term
         self.moo = clmm.Modeling(massdef = 'critical', delta_mdef = 200, halo_profile_model = halo_model)
-        self.moo.set_cosmo(cosmo_clmm)
+        self.moo.set_cosmo(self.cosmo_clmm)
         self.use_cM_relation = use_cM_relation
         if self.use_cM_relation == False: 
             self.cModel = None
         else: 
             self.cModel = self.c200c_model(name=cM_relation)
             logm_array = np.linspace(11, 17, 200)
-            c_array = self.cModel._concentration(cosmo_ccl, 10**logm_array, 1./(1. + self.cluster_z))
+            c_array = self.cModel._concentration(self.cosmo_ccl, 10**logm_array, 1./(1. + self.cluster_z))
             def c200c(logm200c): return np.interp(logm200c, logm_array, c_array)
             self.c200c = c200c
             
@@ -77,7 +86,7 @@ class HaloMass_fromStackedProfile():
             self.ds_nobias = self.moo.eval_excess_surface_density_2h(self.R, self.cluster_z, halobias=1)
             logm_array = np.linspace(11, 17, 200)
             #ccl
-            halobias_array = halobias(cosmo_ccl, 10**logm_array, 
+            halobias_array = halobias(self.cosmo_ccl, 10**logm_array, 
                                                     1./(1.+ self.cluster_z))
             def hbias(logm200c): return np.interp(logm200c, logm_array, halobias_array)
             self.hbias = hbias
@@ -137,7 +146,7 @@ class HaloMass_fromStackedProfile():
             cluster concentration in 200m convention
         """
         m200c_to_m200m = ccl.halos.massdef.mass_translator(mass_in=deff, mass_out=definition_200m, concentration=conc_model)
-        m200m = m200c_to_m200m(cosmo_ccl, m200c, 1/(1+z))
+        m200m = m200c_to_m200m(self.cosmo_ccl, m200c, 1/(1+z))
         return m200m, c200c
 
     def c200c_model(self, name='Diemer15'):
@@ -351,7 +360,12 @@ def param_from_chain(chains, n_cut=20):
     return np.array(mean), np.array(err)
 
 
-def fit_WL_cluster_mass(profile = None, covariance = None, is_covariance_diagonal = True,
+def fit_WL_cluster_mass(cosmology_ccl = None, profile = None, covariance = None, 
+                        colname_radius='radius',
+                                                colname_cluster_z='z_mean',
+                                                colname_covariance='cov_t',
+                                                colname_gt='DSt',     
+                        is_covariance_diagonal = True,
                         a = None, b = None, rmax = None, 
                         two_halo_term = False, fix_c = False,halo_model = 'nfw', mc_relation='Diemer15', method='minuit'):
     r"""fit WL mass from a list of shear profiles and covariance"""
@@ -362,11 +376,11 @@ def fit_WL_cluster_mass(profile = None, covariance = None, is_covariance_diagona
     tab = {name : [] for name in fit_data_name_tot}
     print('fitting...')
     for k, p in enumerate(profile):
-        cluster_z=p['z_mean']
-        radius = p['radius']
-        cov = covariance[k]['cov_t']
-        gt = p['gt']
-        Halo = HaloMass_fromStackedProfile(cluster_z, radius, gt, cov)
+        cluster_z=p[colname_cluster_z]
+        radius = p[colname_radius]
+        cov = covariance[k][colname_covariance]
+        gt = p[colname_gt]
+        Halo = HaloMass_fromStackedProfile(cosmology_ccl, cluster_z, radius, gt, cov)
         Halo.set_radial_range(a, b, rmax)
         Halo.set_halo_model(halo_model = halo_model, 
                             use_cM_relation = fix_c, 

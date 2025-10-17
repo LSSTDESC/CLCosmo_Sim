@@ -15,7 +15,7 @@ import iminuit
 from iminuit import Minuit
 cosmo_astropy.critical_density(0.4).to(u.Msun / u.Mpc**3).value
 
-import _utils_cluster_mass_measurement as fit_mass
+import _utils_cluster_mass_measurement_cosmology_dependent as fit_mass
 import _analysis_cluster_mass_measurement as analysis_WL_mean_mass
 
 def save_pickle(dat, filename, **kwargs):
@@ -33,29 +33,53 @@ from clmm import Cosmology
 from clmm.support import mock_data as mock
 import pyccl as ccl
 
-cosmo = Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448, Omega_k0 = 0.0)
-cosmo_astropy = FlatLambdaCDM(H0=71.0, Om0=0.265, Ob0 = 0.0448)
-cosmo_clmm = Cosmology(H0 = 71.0, Omega_dm0 = 0.265 - 0.0448, Omega_b0 = 0.0448, Omega_k0 = 0.0)
-cosmo_ccl  = ccl.Cosmology(Omega_c=0.265-0.0448, Omega_b=0.0448, h=0.71, A_s=2.1e-9, n_s=0.96, Neff=0, Omega_g=0)
-
 code, analysisname, index_analysis = sys.argv
 analysis_WL_metadata = analysis_WL_mean_mass.analysis[str(analysisname)][int(index_analysis)]
 
 #stacked_profiles
-data = np.load(analysis_WL_metadata['data_path'], allow_pickle=True)
-profiles = data['stacked profile']
-covariances = data['stacked covariance']
+#data = np.load(analysis_WL_metadata['data_path'], allow_pickle=True)
+#profiles = data['stacked profile']
+#covariances = data['stacked covariance']
 
 fix_c = False if analysis_WL_metadata['cM_relation'] == 'None' else True
 two_halo_bool = True if analysis_WL_metadata['two_halo']=='True' else False
-mass_fit =  fit_mass.fit_WL_cluster_mass(profile = profiles, covariance = covariances,
-                                         a = 0, b =  analysis_WL_metadata['radius_min'], 
-                                         rmax = analysis_WL_metadata['radius_max'], 
-                                         two_halo_term =two_halo_bool, 
-                                         fix_c = fix_c,
-                                         halo_model=analysis_WL_metadata['density_profile'],
-                                         mc_relation=analysis_WL_metadata['cM_relation'], 
-                                         method='minuit')
 
-res = {'masses':mass_fit, 'analysis':analysis_WL_metadata}
-save_pickle(res, analysis_WL_metadata['name_save'])
+Om_list = np.linspace(0.1, 0.6, 30)
+
+H0_true = 71
+h = H0_true/100
+Omega_b_true = 0.02258 / (h**2)
+Omega_c_true = 0.1109 / (h**2)
+Omega_m_true = Omega_b_true + Omega_c_true
+sigma8_true = 0.8
+ns_true = 0.963
+
+path = '../../../CLCosmo_Sim_database/data_vary_fiducial_cosmology/'
+data = np.load(path+'stacked_esd_profiles_redmapper_vary_Omega_m.pkl', allow_pickle=True)
+
+for k, Om_ in enumerate(Om_list):
+
+    data_profiles = data[f'Om{k}_stacked_profile']
+    print(data_profiles.colnames)
+    data_covariances = data[f'Om{k}_stacked_covariance']
+    
+    cosmo_ccl = ccl.Cosmology(Omega_c = Om_  - Omega_b_true, Omega_b = Omega_b_true,
+                            h = H0_true/100, sigma8 = sigma8_true, n_s=ns_true, w0=-1, wa=0)
+
+    mass_fit =  fit_mass.fit_WL_cluster_mass(cosmology_ccl = cosmo_ccl, profile = data_profiles, covariance = data_covariances,
+                                             colname_radius='radius',
+                                                colname_cluster_z='z_mean',
+                                                colname_covariance='cov_t',
+                                                colname_gt='DSt',                     
+                                             a = 0, b =  analysis_WL_metadata['radius_min'], 
+                                             rmax = analysis_WL_metadata['radius_max'], 
+                                             two_halo_term =two_halo_bool, 
+                                             
+                                             fix_c = fix_c,
+                                             halo_model=analysis_WL_metadata['density_profile'],
+                                             mc_relation=analysis_WL_metadata['cM_relation'], 
+                                             method='minuit')
+    
+    res = {'masses':mass_fit, 'analysis':analysis_WL_metadata}
+    path = '../../../CLCosmo_Sim/cluster_mass_measurement/cluster_mass_measurement_vary_cosmology/'
+    save_pickle(res, path+ 'fid_Om'+str(k) + analysis_WL_metadata['name_save'])

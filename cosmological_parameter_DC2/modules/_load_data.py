@@ -1,11 +1,111 @@
 import numpy as np
 import pickle
+from scipy.interpolate import interp1d
 def load(filename, **kwargs):
     """Loads GalaxyCluster object to filename using Pickle"""
     with open(filename, 'rb') as fin:
         return pickle.load(fin, **kwargs)
 
-def load_data(analysis_metadata, Z_bin, Richness_bin, z_corner, rich_corner):
+def load_data_vary_cosmology(analysis_metadata):
+
+    Z_bin, Richness_bin = analysis_metadata['redshift_bins'], analysis_metadata['richness_bins']
+    z_corner, rich_corner = analysis_metadata['redshift_corner'], analysis_metadata['richness_corner']
+
+    # Count
+    print('[load data]: counts')
+    path_to_data = '../../../CLCosmo_Sim_database/data_vary_fuducial_cosmology/'
+    table_redmapper = load(path_to_data + 'lens_catalog_cosmoDC2_v1.1.4_redmapper_v0.8.1.pkl')
+    N_obs, proxy_edges, z_edges = np.histogram2d(table_redmapper['redshift'], 
+                                                                table_redmapper['richness'],
+                                                           bins=[z_corner, rich_corner])
+    if analysis_metadata['type'] == 'N': 
+        return N_obs
+            
+    # Lensing
+    if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
+        print('[load data]: stacked lensing profiles and errors')
+        Om_list = np.linspace(0.1, 0.6, 30)
+        w_list = np.linspace(-2.5, -0.5, 30)
+        path = '../../../CLCosmo_Sim_database/data_vary_fuducial_cosmology/'
+        data = np.load(path+'stacked_esd_profiles_redmapper_vary_Omega_m.pkl', allow_pickle=True)
+
+        r = analysis_metadata['radius_centers']
+        DS_obs = np.zeros([len(r), len(Richness_bin), len(Z_bin)])
+        Err_obs = np.zeros([len(r), len(Richness_bin), len(Z_bin)])
+
+        r_grid = np.zeros(DS_obs.shape)
+        for i, z_bin in enumerate(Z_bin):
+            for j, richness_bin in enumerate(Richness_bin):
+                r_grid[:,j,i] = r
+
+        rup = analysis_metadata['radius_max']
+        rlow = analysis_metadata['radius_min']
+        mask_is_in_fit_range = (r_grid > rlow)*(r_grid < rup)
+        mask_is_in_fit_range_1darray = (r > rlow)*(r < rup)
+
+        DS_interpolator = {}
+        DSerr_interpolator = {}
+
+        for i, z_bin in enumerate(Z_bin):
+            
+            for j, richness_bin in enumerate(Richness_bin):
+                
+                data_interp_binOm_ds = []
+                data_interp_binOm_ds_err = []
+                
+                for k, Om_ in enumerate(Om_list):
+                    
+                    ds_datastackOm_k = data['Om'+str(k)+'_stacked_profile']
+                    cov_ds_datastackOm_k = data['Om'+str(k)+'_stacked_covariance']
+                    maskz = (ds_datastackOm_k['z_mean'] > z_bin[0])*(ds_datastackOm_k['z_mean'] < z_bin[1])
+                    maskrichness = (ds_datastackOm_k['obs_mean'] > richness_bin[0])*(ds_datastackOm_k['obs_mean'] < richness_bin[1])
+                    maskbin = maskz * maskrichness
+                    ds_datastackOm_in_redshift_richness_bin = ds_datastackOm_k[maskbin]
+                    cov_ds_datastackOm_in_redshift_richness_bin = cov_ds_datastackOm_k[maskbin]
+                    x = np.array(ds_datastackOm_in_redshift_richness_bin['radius'][0])
+                    ds = np.array(ds_datastackOm_in_redshift_richness_bin['DSt'][0])
+                    ds_err = np.array(cov_ds_datastackOm_in_redshift_richness_bin['cov_t'][0].diagonal()**.5)
+                    data_interp_binOm_ds.append(ds)
+                    data_interp_binOm_ds_err.append(ds_err)
+                
+                lin_interp_DS = interp1d(Om_list, data_interp_binOm_ds, axis=0, kind='linear',
+                                        bounds_error=False, fill_value='extrapolate')
+
+                lin_interp_DS_err = interp1d(Om_list, data_interp_binOm_ds_err, axis=0, kind='linear',
+                                        bounds_error=False, fill_value='extrapolate')
+
+                DSerr_interpolator['z'+str(i) +'_' + 'lambda'+str(j)] = lin_interp_DS_err
+                DS_interpolator['z'+str(i) +'_' + 'lambda'+str(j)] = lin_interp_DS
+
+        def DS_obs_fct(Om):
+
+            DS_obs = np.zeros([len(r), len(Richness_bin), len(Z_bin)])
+            for i, z_bin in enumerate(Z_bin):
+                for j, richness_bin in enumerate(Richness_bin):
+                    DS_obs[:,j,i] = DS_interpolator['z'+str(i) +'_' + 'lambda'+str(j)]([Om])
+            return DS_obs[mask_is_in_fit_range].reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
+
+        def Err_obs_fct(Om):
+
+            DSerr_obs = np.zeros([len(r), len(Richness_bin), len(Z_bin)])
+            for i, z_bin in enumerate(Z_bin):
+                for j, richness_bin in enumerate(Richness_bin):
+                    DSerr_obs[:,j,i] = DSerr_interpolator['z'+str(i) +'_' + 'lambda'+str(j)]([Om])
+            return DSerr_obs[mask_is_in_fit_range].reshape([len(r[(r > rlow)*(r < rup)]), len(Richness_bin), len(Z_bin)])
+            
+
+        r_grid = np.zeros(DS_obs.shape)
+        for i, z_bin in enumerate(Z_bin):
+            for j, richness_bin in enumerate(Richness_bin):
+                r_grid[:,j,i] = r
+        
+        return r, N_obs, DS_obs_fct, Err_obs_fct, mask_is_in_fit_range
+
+
+def load_data(analysis_metadata):
+
+    Z_bin, Richness_bin = analysis_metadata['redshift_bins'], analysis_metadata['richness_bins']
+    z_corner, rich_corner = analysis_metadata['redshift_corner'], analysis_metadata['redshift_corner']
 
     # Count
     print('[load data]: counts')
