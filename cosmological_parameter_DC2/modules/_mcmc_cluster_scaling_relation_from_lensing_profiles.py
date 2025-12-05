@@ -76,8 +76,11 @@ def mcmc(analysis_metadata):
     obs = _load_data.load_data_vary_cosmology(analysis_metadata)
     
     if analysis_metadata['type'] == 'N': N_obs = obs
-    if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN': N_obs, log10Mass, log10Mass_err = obs
-    if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN': _, N_obs, DS_obs, Err_obs, mask_radius=obs
+    if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN': 
+        N_obs, log10Mass, log10Mass_err = obs
+
+    if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN': 
+        _, N_obs, DS_obs, Err_obs, mask_radius=obs
 
     ##############################################################################################################################
     # #############################################################################################################################

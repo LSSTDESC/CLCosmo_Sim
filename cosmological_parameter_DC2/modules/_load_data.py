@@ -101,6 +101,13 @@ def load_data_vary_cosmology(analysis_metadata):
         
         return r, N_obs, DS_obs_fct, Err_obs_fct, mask_is_in_fit_range
 
+    if analysis_metadata['type'] == 'M' or analysis_metadata['type'] == 'MxN':
+        print('[load data]: Alpha parameters and log10M0')
+        alpha_log10m0 = load(analysis_metadata['cosmo_alpha_log10m0'])
+        alpha = alpha_log10m0['alpha']
+        log10m0 = alpha_log10m0['log10m0']
+        return N_obs, alpha, log10m0, alpha_err, log10m0_err
+
 
 def load_data(analysis_metadata):
 

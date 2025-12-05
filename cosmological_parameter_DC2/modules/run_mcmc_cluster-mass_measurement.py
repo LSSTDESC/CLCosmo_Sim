@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pickle
 from astropy.coordinates import SkyCoord, match_coordinates_3d, match_coordinates_sky
-import sys
+import sys,os
 import emcee
 import numpy as np
 from astropy.cosmology import FlatLambdaCDM
@@ -82,4 +82,6 @@ for k, Om_ in enumerate(Om_list):
     
     res = {'masses':mass_fit, 'analysis':analysis_WL_metadata}
     path = '../../../CLCosmo_Sim/cluster_mass_measurement/cluster_mass_measurement_vary_cosmology/'
-    save_pickle(res, path+ 'fid_Om'+str(k) + analysis_WL_metadata['name_save'])
+    path_to_save = path + analysis_WL_metadata['name_save'].split('.pkl')[0] + '/'
+    os.system('mkdir ' + path_to_save)
+    save_pickle(res, path_to_save + 'fid_Om'+str(k) + analysis_WL_metadata['name_save'])
