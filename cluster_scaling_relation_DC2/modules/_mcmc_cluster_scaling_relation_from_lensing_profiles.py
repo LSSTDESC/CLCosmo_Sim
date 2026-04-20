@@ -7,6 +7,8 @@ import emcee
 import matplotlib.pyplot as plt
 import time
 import pickle
+sys.path.append('/pbs/throng/lsst/users/cpayerne/PySSC/')
+import PySSC
 import logging
 logger = logging.getLogger('Fit blinded data')
 logging.basicConfig(
@@ -45,6 +47,12 @@ import CL_COUNT_class_likelihood as likelihood
 import CL_LENSING_cluster_lensing as cl_lensing
 CLCount_likelihood = likelihood.Likelihood()
 import argparse
+
+def SSC_cov(Nb, Sij):
+    n_rich, n_z = Nb.shape
+    Nb_flat = Nb.flatten()[:, np.newaxis]  
+    cov_SSC = (Nb_flat * np.kron(np.ones((n_rich, n_rich)), Sij)) * Nb_flat.T
+    return cov_SSC
 
 def mcmc(analysis_metadata):
 
@@ -100,6 +108,9 @@ def mcmc(analysis_metadata):
         hmd = ccl.halos.hmfunc.MassFuncBocquet20(mass_def=massdef)
     elif analysis_metadata['hmf'] == 'Despali16':  
         hmd = ccl.halos.hmfunc.MassFuncDespali16(mass_def=massdef)
+
+    Sredmapper = 439.78987 #deg2
+    Omega = 4*np.pi*(Sredmapper/(360**2/np.pi))
     #purity
     a_nc, b_nc, a_rc, b_rc = np.log(10)*0.8612, np.log(10)*0.3527, 2.2183, -0.6592
     theta_purity = [a_nc, b_nc, a_rc, b_rc]
@@ -108,8 +119,8 @@ def mcmc(analysis_metadata):
     theta_completeness = [a_nc, b_nc, a_mc, b_mc]
     #rm_relation (first estimation)
     log10m0, z0 = np.log10(10**14.3), .5
-    proxy_mu0, proxy_muz, proxy_mulog10m =  3.34197974,  0.08931269,  2.25997571
-    proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m =  0.56014799, -0.05721073,  0.05623336
+    proxy_mu0, proxy_muz, proxy_mulog10m =  3.345953364933381,  0.06378674560099672,  2.2274595352385975
+    proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m =  0.5634900828247924, -0.04529427946062734,  0.09764409931399064
     theta_rm = [log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
 
     richness_grid = np.logspace(np.log10(20), np.log10(200), 150)
@@ -129,7 +140,11 @@ def mcmc(analysis_metadata):
                'compute_halo_bias':True}
     
     logger.info('[load theory]: compute HMF+bias mass-redshift grids at fixed cosmology')
-    count_modelling_new = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute, params = params)
+
+    adds_N = {'add_purity':True, 
+                  'add_completeness':True}
+    adds_NDS = {'add_purity':False, 
+                'add_completeness':True}
 
     if analysis_metadata['type'] == 'WL' or analysis_metadata['type'] == 'WLxN':
 
@@ -164,9 +179,40 @@ def mcmc(analysis_metadata):
 
     if analysis_metadata['type'] == 'N' or analysis_metadata['type'] == 'WLxN' or analysis_metadata['type'] == 'MxN':
         logger.info('[load theory]: Compute Sij matrix (SSC) from PySSC (Lacasa et al.)')
-        f_sky = (439.78987/(360**2/np.pi))
-        CLCovar = cl_covar.Covariance_matrix()
-        Sij_partialsky = CLCovar.compute_theoretical_Sij(Z_bin, cosmo, f_sky)
+        f_sky = Omega/(4*np.pi)
+        #CLCovar = cl_covar.Covariance_matrix()
+        #Sij_partialsky = CLCovar.compute_theoretical_Sij(Z_bin, cosmo, f_sky)
+        default_cosmo_params = {'omega_b':cosmo['Omega_b']*cosmo['h']**2, 
+                                    'omega_cdm':cosmo['Omega_c']*cosmo['h']**2, 
+                                    'H0':cosmo['h']*100, 
+                                    'n_s':cosmo['n_s'], 
+                                    'sigma8': cosmo['sigma8'],
+                                    'output' : 'mPk'}
+        z_arr = np.linspace(0.2,1.2,1000)
+        nbins_T   = len(Z_bin)
+        windows_T = np.zeros((nbins_T,len(z_arr)))
+        for i, z_bin in enumerate(Z_bin):
+            Dz = z_bin[1]-z_bin[0]
+            z_arr_cut = z_arr[(z_arr > z_bin[0])*(z_arr < z_bin[1])]
+            for k, z in enumerate(z_arr):
+                if ((z>z_bin[0]) and (z<=z_bin[1])):
+                    windows_T[i,k] = 1  
+                    
+        Sij_fullsky = PySSC.Sij_alt_fullsky(z_arr, windows_T, order=1, cosmo_params=default_cosmo_params, cosmo_Class=None, convention=1)
+        Sij_partialsky=Sij_fullsky/f_sky
+        fiducial_covariance = False
+        gaussian = True
+        if fiducial_covariance:
+            count_modelling_fid = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute, params = params)
+            integrand_count_fid = cl_count.define_count_integrand(count_modelling_fid, adds_N)
+            N_fid = Omega * cl_count.Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = integrand_count_fid, grids = grids)
+            NAverageHaloBias_fid = Omega * cl_count.Cluster_NHaloBias_ProxyZ(bins, integrand_count = integrand_count_fid,
+                                                                             halo_bias = count_modelling_fid['halo_bias'], 
+                                                                             grids = grids, cosmo = cosmo)
+            NNSbb_fid = SSC_cov(NAverageHaloBias_fid, Sij_partialsky)
+            Cov_tot_fid = np.diag(N_fid.flatten()) + NNSbb_fid
+        else: 
+            count_modelling = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute, params = params)
 
     def prior(theta, add_bias='False'):
         if add_bias=='False':
@@ -176,20 +222,25 @@ def mcmc(analysis_metadata):
             if b < -0.5: return -np.inf
             if b > 0.5: return -np.inf
         #mean parameter priors
-        if proxy_mu0 < 0: return -np.inf
+        if proxy_mu0 < 0.5: return -np.inf
+        if proxy_mu0 > 4: return -np.inf
         #
         if proxy_muz < -2: return -np.inf
         if proxy_muz > 2: return -np.inf
         #
         if proxy_mulog10m < 0: return -np.inf
+        if proxy_mulog10m > 3: return -np.inf
         #dispersion parameter priors
         if proxy_sigma0 < 0: return -np.inf
+        if proxy_sigma0 > 1.5: return -np.inf
         #
         if proxy_sigmaz < -2: return -np.inf
         if proxy_sigmaz > 2: return -np.inf
         #
         if proxy_sigmalog10m < -2: return -np.inf
         if proxy_sigmalog10m > 2: return -np.inf
+
+        return 0
 
     def lnL(theta):
         
@@ -198,7 +249,9 @@ def mcmc(analysis_metadata):
         else:
             proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m, b = theta
 
-        prior(theta, add_bias=analysis_metadata['add_bias_lensing'])
+        prior_value = prior(theta, add_bias=analysis_metadata['add_bias_lensing'])
+        if not np.isfinite(prior_value):
+            return -np.inf
 
         theta_rm_new = [log10m0, z0, proxy_mu0, proxy_muz, proxy_mulog10m, proxy_sigma0, proxy_sigmaz, proxy_sigmalog10m]
 
@@ -222,33 +275,35 @@ def mcmc(analysis_metadata):
                        'compute_purity':False,
                        'compute_halo_bias':False}
 
-        adds_N = {'add_purity':True, 
-                  'add_completeness':True}
-        adds_NDS = {'add_purity':False, 
-                    'add_completeness':True}
-
         count_modelling_new = cl_count.recompute_count_modelling(count_modelling, grids = grids, compute = compute_new, params = params_new)
         test_sign = count_modelling_new['richness_mass_relation - sigma'].flatten() < 0
-        if len(test_sign[test_sign==True]) != 0: return -np.inf
+        if len(test_sign[test_sign==True]) != 0: 
+            return -np.inf
         integrand_count_new = cl_count.define_count_integrand(count_modelling_new, adds_N)
         integrand_count_ds_new = cl_count.define_count_integrand(count_modelling_new, adds_NDS)
-        Omegaredmapper = 439.78987
-        Omega = 4*np.pi*(Omegaredmapper/(360**2/np.pi))
 
-        N = Omega*cl_count.Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = integrand_count_new, grids = grids)
+        N = Omega * cl_count.Cluster_SurfaceDensity_ProxyZ(bins, integrand_count = integrand_count_new, grids = grids)
         if analysis_metadata['type'] == 'N' or analysis_metadata['type'] == 'WLxN' or analysis_metadata['type'] == 'MxN':
-            gaussian=True
             if gaussian:
-                NAverageHaloBias = Omega * cl_count.Cluster_NHaloBias_ProxyZ(bins, integrand_count = integrand_count_new,
-                                                                             halo_bias = count_modelling_new['halo_bias'], 
-                                                                             grids = grids, cosmo = cosmo)
-                CLCovar = cl_covar.Covariance_matrix()
-                NNSbb = CLCovar.sample_covariance_full_sky(Z_bin, Richness_bin, 
-                                                              NAverageHaloBias.T, 
-                                                              Sij_partialsky)
-                Cov_tot = NNSbb + np.diag(N.T.flatten())
+                if fiducial_covariance:
+                    Cov_tot = Cov_tot_fid
+                else:
+                    NAverageHaloBias = Omega * cl_count.Cluster_NHaloBias_ProxyZ(bins, integrand_count = integrand_count_new,
+                                                                                 halo_bias = count_modelling_new['halo_bias'], 
+                                                                                 grids = grids, cosmo = cosmo)
+                    NNSbb = SSC_cov(NAverageHaloBias, Sij_partialsky)
+                    Cov_tot = np.diag(N.flatten()) + NNSbb
+
                 CLCount_likelihood.lnLikelihood_Binned_Gaussian(N, N_obs.T, Cov_tot)
                 lnLCLCount = CLCount_likelihood.lnL_Binned_Gaussian
+
+                
+                np.save('cov_tot.npy', Cov_tot)
+                np.save('N_th.npy', N)
+                np.save('N_obs.npy', N_obs.T)
+                np.save('Sij_th.npy', Sij_partialsky)
+                np.save('b.npy',  NAverageHaloBias/N)
+                np.save('NNbbSij_th.npy', NNSbb)
 
             else:
                 CLCount_likelihood.lnLikelihood_Binned_Poissonian(N, N_obs.T)
@@ -269,8 +324,7 @@ def mcmc(analysis_metadata):
                 Sum_logSigma = np.sum(np.log(Err_obs_tot.flatten()**2))
             else: 
                 Err_obs_tot = Err_obs
-                Sum_log = 0
-                
+                Sum_logSigma = 0
 
             lnLCLWL = -0.5*np.sum(((DS_profiles - DS_obs)/Err_obs_tot)**2) - 0.5*Sum_logSigma
 
@@ -299,10 +353,39 @@ def mcmc(analysis_metadata):
     logger.info(lnL(initial))
     tf = time.time()
     logger.info(tf-t)
-    nwalker = 100
-    pos = np.array(initial) + .01*np.random.randn(nwalker, ndim)
-    sampler = emcee.EnsembleSampler(nwalker, ndim, lnL)
-    sampler.run_mcmc(pos, 200, progress=True);
-    flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
-    results={'flat_chains':flat_samples, 'analysis':analysis_metadata, 'label_parameters':labels}
-    save_pickle(results, f'../chains/'+analysis_metadata['type']+'/'+analysis_metadata['name']+'.pkl')
+    nwalker = 3000
+    pos = np.array(initial) + 0.01*np.random.randn(nwalker, ndim)
+    #clean pos
+    mask = np.ones(len(pos), dtype=bool)
+    for i, pos_ in enumerate(pos):
+        sigma_map = []
+
+        #clean variance
+        for j in range(len(z_grid)):
+            if analysis_metadata['add_bias_lensing']=='False': p = list(pos_)
+            else: p = list(pos_[:-1])
+            sigma_map.extend(list(rm_relation.proxy_sigma_f(logm_grid, z_grid[j], [log10m0, z0] + p)))
+        if np.sum(np.array(sigma_map) < 0) > 0:
+            mask[i] = False
+        lp = prior(pos_, add_bias=analysis_metadata['add_bias_lensing'])
+        if not np.isfinite(lp):
+            mask[i] = mask[i] * False
+        
+    pos_clean = pos[mask]
+    pos_clean = pos_clean[np.random.choice(np.arange(len(pos_clean)), 100, replace=False)]
+    logger.info(f'After cleaning = {len(pos_clean)} walkers available')
+    erratum_name = ''
+    if 'N' in analysis_metadata['type']:
+        if gaussian:
+            if fiducial_covariance:
+                erratum_name += 'fiducial_covN_'
+        else:
+            erratum_name += 'Poisson_'
+    name_save = f'../chains/'+analysis_metadata['type']+'/'+erratum_name+analysis_metadata['name']+'.pkl'
+    print(name_save)
+    #sampler = emcee.EnsembleSampler(len(pos_clean), ndim, lnL)
+    #sampler.run_mcmc(pos_clean, 200, progress=True);
+    #flat_samples = sampler.get_chain(discard=0, thin=1, flat=True)
+    #results={'flat_chains':flat_samples, 'analysis':analysis_metadata, 'label_parameters':labels}
+    #save_pickle(results,name_save)
+#
