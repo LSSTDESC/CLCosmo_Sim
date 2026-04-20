@@ -31,8 +31,10 @@ class Covariance_matrix():
             z_arr_cut = z_arr[(z_arr > z_bin[0])*(z_arr < z_bin[1])]
             for k, z in enumerate(z_arr):
                 if ((z>z_bin[0]) and (z<=z_bin[1])):
-                    windows_T[i,k] = 1  
-        Sij_fullsky = PySSC.Sij_alt_fullsky(z_arr, windows_T, order=1, cosmo_params=default_cosmo_params, cosmo_Class=None, convention=0)
+                    windows_T[i,k] = 1  / 10000
+        Sij_fullsky = PySSC.Sij_alt_fullsky(z_arr, windows_T, order=1, 
+                                            cosmo_params=default_cosmo_params, 
+                                            cosmo_Class=None, convention=0)
         Sij_partialsky = Sij_fullsky/f_sky
         return Sij_partialsky 
     

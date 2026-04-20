@@ -1,3 +1,4 @@
+
 import numpy as np
 import scipy
 from scipy.special import erfc
@@ -49,6 +50,12 @@ class Likelihood():
         """
         delta = (N_obs_matrix - N_th_matrix).flatten()
         inv_covariance_matrix = np.linalg.inv((covariance_matrix))
+        #print(N_th_matrix.flatten())
+        #print(N_th_matrix.flatten() / np.diagonal(covariance_matrix))
+        #print(-0.5*np.sum(delta*inv_covariance_matrix.dot(delta)))
+        #print(-0.5 * delta.T @ inv_covariance_matrix @ delta)
+        #for i in range(len(N_th_matrix.flatten())):
+        #    print(N_th_matrix.flatten()[i], ' , ', np.diagonal(covariance_matrix)[i]/N_th_matrix.flatten()[i])
         self.lnL_Binned_Gaussian = -0.5*np.sum(delta*inv_covariance_matrix.dot(delta)) - np.log(np.linalg.det(covariance_matrix)**.5)
 
         
